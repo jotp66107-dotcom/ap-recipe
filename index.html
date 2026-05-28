@@ -304,7 +304,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-7</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-8</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -791,9 +791,27 @@ function openEdit(n){
 }
 function addIngRow(name='',g=''){
   const c=document.getElementById('em-ings');
-  const opts=Object.entries(CATS).map(([cat,items])=>
-    `<optgroup label="▸${cat}">${items.map(i=>`<option value="${i}"${i===name?'selected':''}>${i}</option>`).join('')}</optgroup>`
-  ).join('');
+
+  // 優先用 materials 清單，如果還沒載入就用 CATS
+  const catOrder = ['基料','色漿','螢光粉','染料','亮粉','其他'];
+  let opts = '';
+  if (typeof materials !== 'undefined' && materials.length > 0) {
+    // 用 materials 分組建選單
+    const groups = {};
+    for (const m of materials) {
+      if (!groups[m.cat]) groups[m.cat] = [];
+      groups[m.cat].push(m.name);
+    }
+    opts = catOrder.filter(cat => groups[cat]).map(cat =>
+      `<optgroup label="▸${cat}">${groups[cat].sort().map(i=>`<option value="${i}"${i===name?'selected':''}>${i}</option>`).join('')}</optgroup>`
+    ).join('');
+  } else {
+    // fallback: 用 CATS
+    opts = Object.entries(CATS).map(([cat,items])=>
+      `<optgroup label="▸${cat}">${items.map(i=>`<option value="${i}"${i===name?'selected':''}>${i}</option>`).join('')}</optgroup>`
+    ).join('');
+  }
+
   const row=document.createElement('div');row.className='form-row';
   row.innerHTML=`<select class="finp" style="flex:1.1"><option value="">選擇原料</option>${opts}</select><input class="finp" type="text" placeholder="原料名稱" value="${name}" style="flex:1"><input class="finp num" type="number" placeholder="g" min="0" step="0.0001" value="${g}"><button class="rmbtn" onclick="this.parentElement.remove()">✕</button>`;
   const sel=row.querySelector('select'),txt=row.querySelectorAll('input')[0];
