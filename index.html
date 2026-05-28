@@ -304,7 +304,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-4</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-5</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -901,7 +901,8 @@ function showPage(n){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+n).classList.add('active');
   document.getElementById('btn-'+n).classList.add('active');
-  if(n==='search')document.getElementById('s-results').textContent=Object.keys(recipes).filter(k=>curSer.search==='全部'||series(k)===curSer.search).length;
+  if(n==='search') document.getElementById('s-results').textContent=Object.keys(recipes).filter(k=>curSer.search==='全部'||series(k)===curSer.search).length;
+  if(n==='materials') renderMaterials();
 }
 function closeM(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
