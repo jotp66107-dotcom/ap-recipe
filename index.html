@@ -304,7 +304,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-5</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-6</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -910,6 +910,8 @@ function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t
 
 init();
 document.getElementById('s-results').textContent=Object.keys(recipes).length;
+// 確保材料表數字在頁面載入後更新
+setTimeout(updateMatStats, 500);
 
 // ===== EXCEL IMPORT =====
 let pendingImport = [];
@@ -1618,8 +1620,10 @@ function renderMaterials() {
 }
 
 function updateMatStats() {
-  document.getElementById('mat-total').textContent = materials.length;
-  document.getElementById('mat-cats').textContent = [...new Set(materials.map(m=>m.cat))].length;
+  const t = document.getElementById('mat-total');
+  const c = document.getElementById('mat-cats');
+  if (t) t.textContent = materials.length;
+  if (c) c.textContent = [...new Set(materials.map(m=>m.cat))].length;
 }
 
 function cloudSyncMaterials() {
