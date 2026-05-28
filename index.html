@@ -304,7 +304,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-6</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-7</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -557,6 +557,14 @@ function cloudSync() {
 }
 
 // ── 材料表初始化（必須在 init() 之前）──
+const MAT_CAT_COLORS = {
+  '基料':  {bg:'rgba(200,169,110,.15)', color:'var(--accent)'},
+  '色漿':  {bg:'rgba(126,184,201,.15)', color:'var(--accent2)'},
+  '螢光粉':{bg:'rgba(169,142,212,.15)', color:'var(--c3)'},
+  '染料':  {bg:'rgba(224,136,112,.15)', color:'var(--c4)'},
+  '亮粉':  {bg:'rgba(110,196,168,.15)', color:'var(--c5)'},
+  '其他':  {bg:'rgba(122,127,150,.15)', color:'var(--text-muted)'},
+};
 function getDefaultMaterials() {
   const list = [];
   for (const [cat, items] of Object.entries(CATS)) {
@@ -1514,14 +1522,7 @@ function deleteCustomer(id) {
 
 
 // ===== 材料表 =====
-const MAT_CAT_COLORS = {
-  '基料':  {bg:'rgba(200,169,110,.15)', color:'var(--accent)'},
-  '色漿':  {bg:'rgba(126,184,201,.15)', color:'var(--accent2)'},
-  '螢光粉':{bg:'rgba(169,142,212,.15)', color:'var(--c3)'},
-  '染料':  {bg:'rgba(224,136,112,.15)', color:'var(--c4)'},
-  '亮粉':  {bg:'rgba(110,196,168,.15)', color:'var(--c5)'},
-  '其他':  {bg:'rgba(122,127,150,.15)', color:'var(--text-muted)'},
-};
+// MAT_CAT_COLORS moved above
 
 // Pre-populate from existing CATS definition
 // getDefaultMaterials moved above
