@@ -1,0 +1,1746 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP 智慧配方管理系統</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+  :root{--bg:#0e0f13;--surface:#16181f;--surface2:#1e2029;--border:#2a2d3a;--accent:#c8a96e;--accent2:#7eb8c9;--text:#e8e9f0;--text-muted:#7a7f96;--danger:#e06c6c;--success:#6ec48a;--c3:#a98ed4;--c4:#e08870;--c5:#6ec4a8;--radius:10px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+  ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:20px;height:54px;position:sticky;top:0;z-index:100}
+  .logo{font-family:'DM Mono',monospace;font-size:14px;color:var(--accent);letter-spacing:3px;font-weight:500;white-space:nowrap}
+  .nav{display:flex;gap:2px;flex:1}
+  .nav-btn{background:none;border:none;color:var(--text-muted);padding:7px 13px;border-radius:6px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;transition:all .15s;display:flex;align-items:center;gap:5px}
+  .nav-btn:hover{background:var(--surface2);color:var(--text)}
+  .nav-btn.active{background:var(--surface2);color:var(--accent)}
+  .badge{background:var(--accent);color:#000;font-size:10px;font-weight:700;padding:1px 5px;border-radius:99px;font-family:'DM Mono',monospace}
+  .page{display:none;padding:20px;max-width:1200px;margin:0 auto}
+  .page.active{display:block}
+  .page-title{font-size:19px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+  .page-title::before{content:'';width:4px;height:19px;background:var(--accent);border-radius:2px;display:block}
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px}
+  .stat-label{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+  .stat-value{font-family:'DM Mono',monospace;font-size:21px;font-weight:500;color:var(--accent)}
+  .series-tabs{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap}
+  .series-tab{background:var(--surface);border:1px solid var(--border);color:var(--text-muted);padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px;transition:all .15s;font-family:'Noto Sans TC',sans-serif}
+  .series-tab:hover{border-color:var(--accent);color:var(--accent)}
+  .series-tab.active{background:var(--accent);border-color:var(--accent);color:#000;font-weight:500}
+  .search-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .search-input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:9px 13px;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:14px;flex:1;min-width:200px;transition:border-color .15s}
+  .search-input:focus{outline:none;border-color:var(--accent)}
+  .search-input::placeholder{color:var(--text-muted)}
+  .recipe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:10px}
+  .recipe-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:13px;cursor:pointer;transition:all .15s}
+  .recipe-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .recipe-card-num{font-family:'DM Mono',monospace;font-size:19px;font-weight:500;color:var(--accent);margin-bottom:4px}
+  .recipe-card-ingredients{color:var(--text-muted);font-size:12px;line-height:1.6;margin-bottom:8px}
+  .recipe-card-footer{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);border-top:1px solid var(--border);padding-top:7px;display:flex;justify-content:space-between;align-items:center}
+  .sbadge{font-size:10px;padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-weight:500}
+  .s-num{background:rgba(200,169,110,.15);color:var(--accent)}
+  .s-g{background:rgba(126,184,201,.15);color:var(--accent2)}
+  .s-j{background:rgba(169,142,212,.15);color:var(--c3)}
+  .s-nude{background:rgba(224,136,112,.15);color:var(--c4)}
+  .s-sp{background:rgba(110,196,168,.15);color:var(--c5)}
+  .btn{background:var(--accent);color:#000;border:none;padding:9px 15px;border-radius:var(--radius);cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;transition:opacity .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+  .btn:hover{opacity:.85}
+  .btn.sec{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .btn.danger{background:var(--danger);color:#fff}
+  .btn.ok{background:var(--success);color:#000}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:560px;max-height:88vh;overflow-y:auto;padding:22px}
+  .modal-title{font-size:17px;font-weight:700;margin-bottom:15px;color:var(--accent);font-family:'DM Mono',monospace;display:flex;justify-content:space-between;align-items:center}
+  .modal-close{background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:20px;padding:3px;line-height:1}
+  .modal-close:hover{color:var(--text)}
+  .ing-table{width:100%;border-collapse:collapse;margin-bottom:13px}
+  .ing-table th{text-align:left;padding:7px 9px;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--border)}
+  .ing-table td{padding:8px 9px;border-bottom:1px solid var(--border);font-size:13px}
+  .ing-table tr:last-child td{border-bottom:none}
+  .ctag{font-size:9px;padding:1px 5px;border-radius:3px;font-family:'DM Mono',monospace}
+  .c基料{background:rgba(200,169,110,.2);color:var(--accent)}
+  .c色漿{background:rgba(126,184,201,.2);color:var(--accent2)}
+  .c螢光粉{background:rgba(169,142,212,.2);color:var(--c3)}
+  .c染料{background:rgba(224,136,112,.2);color:var(--c4)}
+  .c亮粉{background:rgba(110,196,168,.2);color:var(--c5)}
+  .c未分類{background:var(--surface2);color:var(--text-muted)}
+  .ing-g{font-family:'DM Mono',monospace;color:var(--accent2)}
+  .ing-pct{font-family:'DM Mono',monospace;color:var(--text-muted);font-size:11px}
+  .ibar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;width:65px}
+  .ibar-fill{height:100%;background:var(--accent);border-radius:2px}
+  .total-row td{font-weight:700;color:var(--accent);font-family:'DM Mono',monospace;border-top:2px solid var(--border);padding-top:10px}
+  .scale-box{background:var(--surface2);border-radius:var(--radius);padding:12px;margin-bottom:13px}
+  .flabel{font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+  .sc-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .sc-inp{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:6px;font-family:'DM Mono',monospace;font-size:14px;width:110px}
+  .sc-inp:focus{outline:none;border-color:var(--accent)}
+  .sc-unit{color:var(--text-muted);font-size:13px}
+  .hl{color:var(--accent);font-weight:700}
+  .form-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .finp{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:7px 9px;border-radius:6px;font-family:'Noto Sans TC',sans-serif;font-size:13px;flex:1;transition:border-color .15s}
+  .finp:focus{outline:none;border-color:var(--accent)}
+  .finp.num{font-family:'DM Mono',monospace;width:90px;flex:none}
+  select.finp{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath fill='%237a7f96' d='M5 7L1 3h8z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:26px}
+  .rmbtn{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:5px;border-radius:4px;flex:none}
+  .rmbtn:hover{background:rgba(224,108,108,.1)}
+  .addbtn{background:none;border:1px dashed var(--border);color:var(--text-muted);padding:7px;border-radius:6px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;font-size:13px;width:100%;margin-bottom:13px;transition:all .15s}
+  .addbtn:hover{border-color:var(--accent);color:var(--accent)}
+  .sbox{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:13px}
+  .stitle{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:11px}
+  .orows{display:flex;flex-direction:column;gap:6px}
+  .orow{display:flex;gap:6px;align-items:center}
+  .ptable{width:100%;border-collapse:collapse}
+  .ptable th{background:var(--surface2);padding:9px 12px;text-align:left;font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px}
+  .ptable td{padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px}
+  .ptable tr:hover td{background:var(--surface2)}
+  .cnum{font-family:'DM Mono',monospace;color:var(--accent);font-weight:500}
+  .qkg{font-family:'DM Mono',monospace;color:var(--accent2)}
+  .ssum td{font-weight:700;background:var(--surface2)!important;border-top:2px solid var(--border);color:var(--accent);font-family:'DM Mono',monospace}
+  .empty{text-align:center;padding:48px 20px;color:var(--text-muted)}
+  .arow{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+  .toast{position:fixed;bottom:20px;right:20px;background:var(--success);color:#000;padding:10px 15px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:999;transform:translateY(70px);opacity:0;transition:all .3s}
+  .toast.show{transform:translateY(0);opacity:1}
+  @media print{.header,.no-print{display:none!important}.page{display:block!important;padding:0}body{background:#fff;color:#000}.ptable th{background:#f5f5f5}.cnum,.qkg,.stat-value{color:#000}.sbox{border-color:#ccc}}
+</style>
+  <!-- Firebase REST API (no WebSocket) -->
+  <script>
+    (function() {
+      const PROJECT = 'ap-recipe';
+      const API_KEY = 'AIzaSyB5z7rKBxI-sXkQsO5mTMtmFzmyPVNVbeA';
+      const BASE    = 'https://firestore.googleapis.com/v1/projects/' + PROJECT + '/databases/(default)/documents';
+      const DOC_URL = BASE + '/ap_system/recipes?key=' + API_KEY;
+
+      window._fsReady = false;
+      window._pendingCloudSave = false;
+
+      function dbg(msg, isErr=false) {
+        console.log('[Firebase]', msg);
+        const el = document.getElementById('sync-status');
+        if (!el) return;
+        el.textContent = msg;
+        el.style.color   = isErr ? 'var(--danger)' : 'var(--success)';
+        el.style.opacity = '1';
+        clearTimeout(window._syncTimer);
+        if (!isErr) window._syncTimer = setTimeout(() => { el.style.opacity = '0'; }, 5000);
+      }
+
+      // ── 寫入：PUT (create or overwrite) ──
+      window.saveToCloud = async function(data, customersData, materialsData) {
+        try {
+          const count = Object.keys(data).length;
+          dbg('寫入雲端中... (' + count + ' 筆)');
+          const custData = customersData || (typeof window._getCustomers === 'function' ? window._getCustomers() : []);
+          const matData  = materialsData  || (typeof window._getMaterials  === 'function' ? window._getMaterials()  : []);
+
+          const body = {
+            fields: {
+              data:      { stringValue: JSON.stringify(data) },
+              count:     { integerValue: String(count) },
+              customers:  { stringValue: JSON.stringify(custData) },
+              materials:  { stringValue: JSON.stringify(matData) },
+              updatedAt: { integerValue: String(Date.now()) }
+            }
+          };
+
+          const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('超時 15 秒')), 15000));
+          const req = fetch(DOC_URL, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          const res = await Promise.race([req, timeout]);
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error('HTTP ' + res.status + ': ' + err);
+          }
+
+          window._pendingCloudSave = false;
+          dbg('✅ 雲端寫入成功 (' + count + ' 筆)');
+          return true;
+        } catch(e) {
+          dbg('❌ 寫入失敗: ' + e.message, true);
+          console.error('saveToCloud error:', e);
+          return false;
+        }
+      };
+
+      // ── 讀取：GET ──
+      window._getCloudRaw = async function() {
+        try {
+          const res = await fetch(DOC_URL);
+          if (res.status === 404) return null;
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const doc = await res.json();
+          if (!doc.fields || !doc.fields.data) return null;
+          const recipes = JSON.parse(doc.fields.data.stringValue);
+          const customers = doc.fields.customers ? JSON.parse(doc.fields.customers.stringValue) : null;
+          const materials = doc.fields.materials ? JSON.parse(doc.fields.materials.stringValue) : null;
+          return { recipes, customers, materials };
+        } catch(e) {
+          console.error('_getCloudRaw error:', e);
+          return null;
+        }
+      };
+
+      window.reloadFromCloud = async function(silent=false) {
+        try {
+          if (!silent) dbg('讀取雲端中...');
+          const cloudRaw = await window._getCloudRaw();
+          window._fsReady = true;
+
+          if (!cloudRaw) {
+            dbg('雲端無資料，推送本機資料');
+            const local = window._getRecipes();
+            const localCust = typeof window._getCustomers === 'function' ? window._getCustomers() : [];
+            dbg('本機筆數: ' + Object.keys(local).length);
+            await window.saveToCloud(local, localCust);
+            return;
+          }
+
+          const cloudData  = cloudRaw.recipes;
+          const cloudCust  = cloudRaw.customers;
+          const cloudCount = Object.keys(cloudData).length;
+          const local      = window._getRecipes();
+          const localCount = Object.keys(local).length;
+          dbg('雲端: ' + cloudCount + ' 筆 / 本機: ' + localCount + ' 筆');
+
+          if (localCount > cloudCount) {
+            dbg('本機較多，推送至雲端...');
+            const localCust = typeof window._getCustomers === 'function' ? window._getCustomers() : [];
+            await window.saveToCloud(local, localCust);
+          } else {
+            dbg('套用雲端資料 (' + cloudCount + ' 筆)');
+            window._applyRecipes(cloudData);
+            // Apply cloud customers if available
+            if (cloudCust && typeof window._applyCustomers === 'function') {
+              window._applyCustomers(cloudCust);
+            }
+            if (cloudRaw.materials && typeof window._applyMaterials === 'function') {
+              window._applyMaterials(cloudRaw.materials);
+            }
+          }
+
+          if (window._pendingCloudSave) {
+            dbg('補傳待傳資料...');
+            const localCust = typeof window._getCustomers === 'function' ? window._getCustomers() : [];
+            await window.saveToCloud(window._getRecipes(), localCust);
+          }
+
+        } catch(e) {
+          dbg('❌ 連線失敗: ' + e.message, true);
+          window._fsReady = false;
+        }
+      };
+
+      function waitAndSync() {
+        if (typeof window._getRecipes === 'function' && typeof window._applyRecipes === 'function') {
+          dbg('橋接函數就緒，開始同步');
+          window._fsReady = true;
+          window.reloadFromCloud(false);
+        } else {
+          setTimeout(waitAndSync, 100);
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitAndSync);
+      } else {
+        waitAndSync();
+      }
+    })();
+  </script>
+</head>
+<body>
+
+<style id="login-style">
+#login-screen{position:fixed;inset:0;background:#0e0f13;z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-box{background:#16181f;border:1px solid #2a2d3a;border-radius:16px;padding:40px 36px;width:100%;max-width:360px;text-align:center}
+.login-logo{font-family:'DM Mono',monospace;font-size:22px;color:#c8a96e;letter-spacing:4px;margin-bottom:8px}
+.login-sub{color:#7a7f96;font-size:13px;margin-bottom:28px}
+.login-inp{width:100%;background:#1e2029;border:1px solid #2a2d3a;color:#e8e9f0;padding:12px 14px;border-radius:8px;font-size:15px;text-align:center;letter-spacing:3px;margin-bottom:12px;font-family:monospace;transition:border-color .15s}
+.login-inp:focus{outline:none;border-color:#c8a96e}
+.login-btn{width:100%;background:#c8a96e;color:#000;border:none;padding:12px;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s}
+.login-btn:hover{opacity:.85}
+.login-err{color:#e06c6c;font-size:12px;margin-top:8px;min-height:18px}
+</style>
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">&#9650; AP</div>
+    <div class="login-sub">智慧配方管理系統</div>
+    <input class="login-inp" id="pw-inp" type="password" placeholder="請輸入密碼" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="login-btn" onclick="doLogin()">進入系統</button>
+    <div class="login-err" id="pw-err"></div>
+  </div>
+</div>
+<script>
+(function(){
+  if(localStorage.getItem('ap_auth')==='1'){
+    window.addEventListener('DOMContentLoaded',function(){
+      var s=document.getElementById('login-screen');
+      if(s)s.style.display='none';
+      var st=document.getElementById('login-style');
+      if(st)st.remove();
+    });
+  }
+})();
+function doLogin(){
+  var pw=document.getElementById('pw-inp').value;
+  if(pw==='123456abc'){
+    document.getElementById('login-screen').style.display='none';
+    var st=document.getElementById('login-style');if(st)st.remove();
+    localStorage.setItem('ap_auth','1');
+  } else {
+    document.getElementById('pw-err').textContent='密碼錯誤，請重試';
+    document.getElementById('pw-inp').value='';
+    document.getElementById('pw-inp').focus();
+  }
+}
+</script>
+
+
+<div class="header">
+  <div class="logo">▲ AP</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-10</div>
+  <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
+    <span style="font-size:11px;color:var(--text-muted)">客戶</span>
+    <select id="customer-select" onchange="switchCustomer(this.value)"
+      style="background:var(--surface2);border:1px solid var(--border);color:var(--accent);padding:3px 8px;border-radius:6px;font-size:12px;font-family:'Noto Sans TC',sans-serif;cursor:pointer">
+    </select>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" onclick="showPage('search')" id="btn-search">🔍 配方查詢</button>
+    <button class="nav-btn" onclick="showPage('manage')" id="btn-manage">📋 配方管理</button>
+    <button class="nav-btn" onclick="showPage('edit')" id="btn-edit">✏️ 配方修正</button>
+    <button class="nav-btn" onclick="showPage('order')" id="btn-order">📦 訂單生產表 <span class="badge" id="obadge" style="display:none">0</span></button>
+    <button class="nav-btn" onclick="showPage('materials')" id="btn-materials">🧪 材料表</button>
+  </nav>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+    <button onclick="reloadFromCloud && reloadFromCloud()" style="background:none;border:1px solid var(--border);color:var(--text-muted);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans TC',sans-serif">🔄 同步</button>
+    <button onclick="testFirebase()" style="background:none;border:1px solid var(--accent);color:var(--accent);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans TC',sans-serif">🧪 測試上傳</button>
+    <button onclick="downloadCloudData()" style="background:none;border:1px solid var(--accent2);color:var(--accent2);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:'Noto Sans TC',sans-serif">⬇️ 下載雲端資料</button>
+    <div id="sync-status" style="font-size:11px;color:var(--success);transition:opacity 1s;opacity:0;font-family:'DM Mono',monospace;white-space:nowrap"></div>
+  </div>
+</div>
+
+<div class="page active" id="page-search">
+  <div class="page-title">配方查詢
+    <span id="customer-badge" style="display:none;font-size:12px;font-weight:400;background:rgba(200,169,110,.15);color:var(--accent);padding:3px 10px;border-radius:20px;margin-left:6px"></span>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">配方總數</div><div class="stat-value" id="s-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">搜尋結果</div><div class="stat-value" id="s-results">0</div></div>
+    <div class="stat-card"><div class="stat-label">色系</div><div class="stat-value" style="font-size:13px;margin-top:4px">200色 G J Nude</div></div>
+    <div class="stat-card"><div class="stat-label">原料種類</div><div class="stat-value" id="s-ings">0</div></div>
+  </div>
+  <div class="series-tabs" id="stabs-search"></div>
+  <div class="search-bar">
+    <input class="search-input" id="sinp" placeholder="色號（201 G01 J05 Nude3）或原料名稱…" oninput="filterSearch()">
+    <button class="btn sec" onclick="clearSearch()">清除</button>
+  </div>
+  <div class="recipe-grid" id="grid-search"></div>
+</div>
+
+<div class="page" id="page-manage">
+  <div class="page-title">配方管理</div>
+  <div class="sbox" style="margin-bottom:14px">
+    <div class="stitle">客戶管理</div>
+    <div id="customer-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <input id="new-customer-name" class="finp" type="text" placeholder="客戶名稱" style="width:130px;flex:none">
+      <input id="new-customer-pattern" class="finp" type="text" placeholder="色號範圍（如 201-364 或 S）" style="flex:1;min-width:180px">
+      <button class="btn" onclick="addCustomer()">＋ 新增客戶</button>
+    </div>
+  </div>
+  <div class="series-tabs" id="stabs-manage"></div>
+  <div class="search-bar">
+    <input class="search-input" id="minp" placeholder="搜尋色號或原料…" oninput="filterManage()">
+    <button class="btn" onclick="openAddModal()">＋ 新增配方</button>
+    <button class="btn sec" onclick="document.getElementById('xl-file').click()">📥 匯入 Excel</button>
+    <button class="btn sec" onclick="exportRecipes()">💾 備份資料</button>
+    <button class="btn sec" onclick="document.getElementById('json-file').click()">♻️ 還原備份</button>
+    <input type="file" id="json-file" accept=".json" style="display:none" onchange="importJsonBackup(this)">
+    <button class="btn sec" onclick="resetToDefault()" style="color:#e06c6c;border-color:#e06c6c">⚠️ 還原預設</button>
+    <button class="btn" onclick="forceUploadToCloud()" id="cloud-upload-btn">☁️ 上傳本機資料到雲端</button>
+    <input type="file" id="xl-file" accept=".xlsx" style="display:none" onchange="importExcel(this)">
+  </div>
+  <div class="recipe-grid" id="grid-manage"></div>
+</div>
+
+<div class="page" id="page-edit">
+  <div class="page-title">配方修正</div>
+  <div class="sbox">
+    <div class="stitle">選擇要修正的配方</div>
+    <div class="search-bar" style="margin-bottom:0">
+      <input class="search-input" id="einp" placeholder="輸入色號…" oninput="filterEditSearch()">
+    </div>
+    <div id="edit-results" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px"></div>
+  </div>
+  <div id="edit-area"></div>
+</div>
+
+<div class="page" id="page-order">
+  <div class="page-title">訂單生產配方表</div>
+  <div class="sbox no-print">
+    <div class="stitle">新增訂單項目</div>
+    <div class="orows" id="orows">
+      <div class="orow">
+        <div style="position:relative;width:185px;flex:none">
+          <input class="finp" type="text" placeholder="輸入色號…" autocomplete="off" oninput="showColorSuggest(this)" onblur="setTimeout(()=>hideColorSuggest(this),200)" style="width:100%">
+          <div class="color-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:50"></div>
+        </div>
+        <input class="finp num" type="number" placeholder="數量 (kg)" min="0.001" step="0.001">
+        <button class="btn sec" onclick="rmORow(this)">✕</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn sec" onclick="addORow()">＋ 新增品項</button>
+      <button class="btn" onclick="genProd()">⚡ 生成生產配方表</button>
+      <button class="btn sec" onclick="clearOrd()">清空</button>
+    </div>
+  </div>
+  <div id="prod-out"></div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-title"><span id="mtitle">配方</span><button class="modal-close" onclick="closeM('detail-modal')">✕</button></div>
+    <div class="scale-box">
+      <div class="flabel">換算用量</div>
+      <div class="sc-row">
+        <input class="sc-inp" id="sc-inp" type="number" value="50" min="0.001" step="0.001" oninput="updateScale()">
+        <span class="sc-unit">g &nbsp;→&nbsp; 乘以 <span id="sc-fac" class="hl">1.0000×</span></span>
+      </div>
+    </div>
+    <table class="ing-table">
+      <thead><tr><th>原料</th><th>分類</th><th>用量(g)</th><th>比例</th><th style="width:70px"></th></tr></thead>
+      <tbody id="mtbody"></tbody>
+    </table>
+    <div class="arow">
+      <button class="btn" onclick="addToOrd()">加入訂單</button>
+      <button class="btn sec" onclick="editCur()">修正配方</button>
+      <button class="btn sec" onclick="window.print()">🖨 列印</button>
+      <button class="btn sec" onclick="closeM('detail-modal')">關閉</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title"><span id="em-title">新增配方</span><button class="modal-close" onclick="closeM('edit-modal')">✕</button></div>
+    <div style="margin-bottom:11px"><div class="flabel">色號</div><input class="finp" id="em-num" type="text" placeholder="201 / G13 / J19 / Nude7" style="width:200px"></div>
+    <div class="flabel" style="margin-bottom:7px">原料成分（順序：基料 → 色漿 → 螢光粉 → 染料 → 亮粉）</div>
+    <div id="em-ings"></div>
+    <button class="addbtn" onclick="addIngRow()">＋ 新增原料</button>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn" onclick="saveR()">💾 儲存</button>
+      <button class="btn sec" onclick="closeM('edit-modal')">取消</button>
+      <button class="btn danger" id="del-btn" onclick="delR()" style="display:none">🗑 刪除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const CATS={"基料":["D","L","L稀","NW3","乳白","無H乳白"],"色漿":["4529螢橘","5629螢黃","6526螢藍","6586螢綠","7520綠","8022黃","80406棕","8123黃","8124黃","8126黃","83105","83115螢綠","83126螢黃","83131螢橘","83150螢紅","83188螢桃","83616螢桃","83825螢藍","84250洋紅","8522紫","8524藍","85250藍","8526紅","8529紫紅","8552橘","8802桃紅","8804黃","8840棕","8844棕紅","8920紅","8922青藍","8928紫","UG綠","外電白","白UJ100","黑"],"螢光粉":["420粉","421粉","423粉","425粉","426粉","428粉","440粉","712粉","RTS21粉"],"染料":["102染黃","210染橘","304染紅","402染棕","417染桃","50C寶藍","520染綠","52C染綠","606染天藍","623染藍","70c染天藍","821染黑","丰采染螢光綠","丰采染螢光黃"],"亮粉":["160目閃鑽金","5081","5230粉","821-閃金400目","821-閃金80目","9011","9012","9013","9014","9016","D590H","MP00430","MP00431","MP00450","S-100","S-35","杰雄S004","變色龍T-0629","閃鑽白160目","閃鑽白80目","閃鑽白810-600目"]};
+const ING_CAT={};let ci=1;
+for(const[cat,items]of Object.entries(CATS)){for(const i of items)ING_CAT[i]={cat,order:ci};ci++;}
+function getIC(n){
+  // 先查靜態 ING_CAT
+  if (ING_CAT[n]) return ING_CAT[n];
+  // 再查動態 materials 清單
+  if (typeof materials !== 'undefined') {
+    const catOrder = {'基料':1,'色漿':2,'螢光粉':3,'染料':4,'亮粉':5,'其他':6};
+    const m = materials.find(x => x.name === n);
+    if (m) return { cat: m.cat, order: catOrder[m.cat] || 9 };
+  }
+  return {cat:'未分類', order:9};
+}
+
+const RAW={"201":{"ingredients":[{"name":"L稀","g":9252.7374},{"name":"8928紫","g":92.9325},{"name":"83126螢黃","g":38.6893},{"name":"白UJ100","g":36.3572},{"name":"440粉","g":686.8849},{"name":"426粉","g":45.2995},{"name":"712粉","g":10.0992}],"total_g":10163.0},"202":{"ingredients":[{"name":"L稀","g":41.06},{"name":"83825螢藍","g":3.74},{"name":"白UJ100","g":0.07},{"name":"712粉","g":5.13}],"total_g":50.0},"203":{"ingredients":[{"name":"L稀","g":41.81},{"name":"6586螢綠","g":5.02},{"name":"白UJ100","g":0.67},{"name":"421粉","g":2.51}],"total_g":50.01},"204":{"ingredients":[{"name":"L稀","g":42.37},{"name":"6586螢綠","g":2.54},{"name":"白UJ100","g":1.69},{"name":"421粉","g":2.54},{"name":"420粉","g":0.85}],"total_g":49.99},"205":{"ingredients":[{"name":"L稀","g":39.15},{"name":"5629螢黃","g":4.7},{"name":"6586螢綠","g":2.35},{"name":"420粉","g":2.35},{"name":"421粉","g":1.46}],"total_g":50.01},"206":{"ingredients":[{"name":"L稀","g":43.75},{"name":"白UJ100","g":2.5},{"name":"5629螢黃","g":1.88},{"name":"420粉","g":1.88}],"total_g":50.01},"207":{"ingredients":[{"name":"L稀","g":42.88},{"name":"白UJ100","g":2.14},{"name":"5629螢黃","g":1.62},{"name":"8123黃","g":0.86},{"name":"420粉","g":2.5}],"total_g":50.0},"208":{"ingredients":[{"name":"L稀","g":9183.72},{"name":"白UJ100","g":611.5},{"name":"423粉","g":492.78},{"name":"RTS21粉","g":47.57}],"total_g":10335.57},"209":{"ingredients":[{"name":"L稀","g":8925.91},{"name":"83150螢紅","g":357.28},{"name":"白UJ100","g":320.74},{"name":"425粉","g":322.77},{"name":"423粉","g":281.3}],"total_g":10208.0},"210":{"ingredients":[{"name":"L稀","g":39.44},{"name":"83150螢紅","g":6.7},{"name":"白UJ100","g":0.31},{"name":"425粉","g":3.55}],"total_g":50.0},"211":{"ingredients":[{"name":"L稀","g":4789.57},{"name":"83825螢藍","g":22.18},{"name":"白UJ100","g":19.57},{"name":"8928紫","g":5.99},{"name":"440粉","g":335.71}],"total_g":5173.02},"212":{"ingredients":[{"name":"L稀","g":42.02},{"name":"8522紫","g":2.94},{"name":"白UJ100","g":0.84},{"name":"83188螢桃","g":0.84},{"name":"440粉","g":2.52},{"name":"428粉","g":0.84}],"total_g":50.0},"213":{"ingredients":[{"name":"L稀","g":42.71},{"name":"8522紫","g":1.71},{"name":"白UJ100","g":1.03},{"name":"83188螢桃","g":0.42},{"name":"428粉","g":3.84},{"name":"RTS21粉","g":0.29}],"total_g":50.0},"214":{"ingredients":[{"name":"L稀","g":45.01},{"name":"白UJ100","g":2.89},{"name":"8522紫","g":0.39},{"name":"83126螢黃","g":0.11},{"name":"428粉","g":1.61}],"total_g":50.01},"215":{"ingredients":[{"name":"L稀","g":46.25},{"name":"白UJ100","g":1.36},{"name":"83150螢紅","g":0.5},{"name":"426粉","g":3.0}],"total_g":51.11},"216":{"ingredients":[{"name":"L稀","g":9019.5498},{"name":"白UJ100","g":507.0991},{"name":"83150螢紅","g":95.113},{"name":"426粉","g":571.2382}],"total_g":10193.0},"217":{"ingredients":[{"name":"L稀","g":9093.0723},{"name":"白UJ100","g":796.4291},{"name":"426粉","g":282.4986},{"name":"RTS21粉","g":8.17}],"total_g":10180.17},"218":{"ingredients":[{"name":"L稀","g":9061.7023},{"name":"白UJ100","g":497.4495},{"name":"83126螢黃","g":2.0304},{"name":"425粉","g":408.1116},{"name":"426粉","g":200.7061}],"total_g":10170.0},"219":{"ingredients":[{"name":"L稀","g":6318.8868},{"name":"L","g":1805.3936},{"name":"白UJ100","g":1532.68},{"name":"83131螢橘","g":104.1233},{"name":"83188螢桃","g":60.3608},{"name":"426粉","g":289.8781},{"name":"423粉","g":49.6774}],"total_g":10161.0},"220":{"ingredients":[{"name":"L稀","g":3262.4434},{"name":"L","g":932.1267},{"name":"白UJ100","g":563.0045},{"name":"83126螢黃","g":182.9864},{"name":"83131螢橘","g":144.5405},{"name":"426粉","g":91.3484}],"total_g":5176.45},"221":{"ingredients":[{"name":"L","g":4759.1249},{"name":"白UJ100","g":306.4481},{"name":"8552橘","g":70.4228},{"name":"83126螢黃","g":29.8715},{"name":"8844棕紅","g":12.7827}],"total_g":5178.65},"222":{"ingredients":[{"name":"L","g":4932.7822},{"name":"白UJ100","g":152.9703},{"name":"8552橘","g":36.7129},{"name":"8022黃","g":20.0876},{"name":"8804黃","g":15.297}],"total_g":5157.85},"223":{"ingredients":[{"name":"D","g":45.6},{"name":"UG綠","g":2.58},{"name":"85250藍","g":1.92},{"name":"白UJ100","g":0.62}],"total_g":50.72},"224":{"ingredients":[{"name":"L","g":10975.51},{"name":"白UJ100","g":433.16},{"name":"UG綠","g":316.86},{"name":"85250藍","g":39.18},{"name":"83105","g":25.3}],"total_g":11790.01},"225":{"ingredients":[{"name":"D","g":9305.0911},{"name":"白UJ100","g":494.3796},{"name":"7520綠","g":304.9916},{"name":"85250藍","g":72.7377}],"total_g":10177.2},"226":{"ingredients":[{"name":"D","g":9624.279},{"name":"白UJ100","g":455.7476},{"name":"7520綠","g":87.6202},{"name":"85250藍","g":35.1119},{"name":"黑","g":1.9914}],"total_g":10204.75},"227":{"ingredients":[{"name":"D","g":9361.1391},{"name":"白UJ100","g":540.8226},{"name":"7520綠","g":149.8266},{"name":"85250藍","g":108.9617}],"total_g":10160.75},"228":{"ingredients":[{"name":"L","g":9422.1116},{"name":"白UJ100","g":486.7639},{"name":"83825螢藍","g":188.0378},{"name":"UG綠","g":136.3367}],"total_g":10233.25},"229":{"ingredients":[{"name":"L","g":10497.0},{"name":"白UJ100","g":904.0},{"name":"85250藍","g":96.8},{"name":"7520綠","g":67.75},{"name":"83115螢綠","g":62.13}],"total_g":11627.68},"230":{"ingredients":[{"name":"L","g":9399.6311},{"name":"白UJ100","g":750.75},{"name":"UG綠","g":114.255},{"name":"83825螢藍","g":78.043},{"name":"83105","g":26.3},{"name":"8124黃","g":4.0209}],"total_g":10373.0},"231":{"ingredients":[{"name":"L","g":8955.2837},{"name":"白UJ100","g":1354.3046},{"name":"7520綠","g":66.6293},{"name":"85250藍","g":15.747},{"name":"黑","g":2.0353}],"total_g":10394.0},"232":{"ingredients":[{"name":"L","g":43.61},{"name":"白UJ100","g":6.11},{"name":"7520綠","g":0.28}],"total_g":50.0},"233":{"ingredients":[{"name":"L","g":43.68},{"name":"白UJ100","g":6.11},{"name":"7520綠","g":0.12},{"name":"8126黃","g":0.09}],"total_g":50.0},"234":{"ingredients":[{"name":"L","g":4280.51},{"name":"白UJ100","g":856.1},{"name":"8126黃","g":12.36},{"name":"7520綠","g":1.93}],"total_g":5150.9},"235":{"ingredients":[{"name":"L","g":41.19},{"name":"白UJ100","g":8.24},{"name":"8126黃","g":0.49},{"name":"7520綠","g":0.07}],"total_g":49.99},"236":{"ingredients":[{"name":"L","g":9363.46},{"name":"白UJ100","g":729.31},{"name":"8126黃","g":56.81},{"name":"8123黃","g":14.21},{"name":"7520綠","g":3.47}],"total_g":10167.26},"237":{"ingredients":[{"name":"L","g":41.6},{"name":"白UJ100","g":8.32},{"name":"8022黃","g":0.08}],"total_g":50.0},"238":{"ingredients":[{"name":"D","g":46.93},{"name":"85250藍","g":1.94},{"name":"8928紫","g":0.68},{"name":"白UJ100","g":0.44}],"total_g":49.99},"239":{"ingredients":[{"name":"D","g":8090.2366},{"name":"83825螢藍","g":1932.8366},{"name":"6526螢藍","g":468.55},{"name":"白UJ100","g":151.2861},{"name":"85250藍","g":73.103},{"name":"黑","g":17.0877}],"total_g":10733.1},"240":{"ingredients":[{"name":"D","g":15076.1634},{"name":"6526螢藍","g":2397.754},{"name":"83825螢藍","g":1638.4906},{"name":"白UJ100","g":509.6779},{"name":"黑","g":12.8773},{"name":"8928紫","g":9.0367}],"total_g":19644.0},"241":{"ingredients":[{"name":"L","g":10641.0},{"name":"83825螢藍","g":932.0},{"name":"白UJ100","g":545.0},{"name":"6526螢藍","g":434.02},{"name":"85250藍","g":72.66}],"total_g":12624.68},"242":{"ingredients":[{"name":"L","g":4523.75},{"name":"6526螢藍","g":592.25},{"name":"白UJ100","g":389.75},{"name":"8928紫","g":1.47}],"total_g":5507.22},"243":{"ingredients":[{"name":"L","g":4247.79},{"name":"白UJ100","g":668.83},{"name":"6526螢藍","g":307.79},{"name":"8928紫","g":0.6}],"total_g":5225.01},"244":{"ingredients":[{"name":"L","g":41.0},{"name":"白UJ100","g":8.3},{"name":"6526螢藍","g":0.18},{"name":"85250藍","g":0.03}],"total_g":49.51},"245":{"ingredients":[{"name":"L","g":9203.83},{"name":"白UJ100","g":904.77},{"name":"8522紫","g":24.41},{"name":"8802桃紅","g":20.87},{"name":"8524藍","g":19.03}],"total_g":10172.91},"246":{"ingredients":[{"name":"L","g":5532.0},{"name":"黑","g":4.01},{"name":"白","g":494.56},{"name":"83825","g":203.08},{"name":"6526","g":201.28}],"total_g":6434.93},"247":{"ingredients":[{"name":"L","g":8391.8995},{"name":"6526螢藍","g":1451.2564},{"name":"白UJ100","g":277.0375},{"name":"83825螢藍","g":71.8842},{"name":"85250藍","g":20.0491},{"name":"黑","g":10.9232}],"total_g":10223.05},"248":{"ingredients":[{"name":"L","g":8308.7386},{"name":"6526螢藍","g":1350.4571},{"name":"白UJ100","g":511.0362},{"name":"83825螢藍","g":21.0},{"name":"黑","g":10.5829},{"name":"85250藍","g":8.9602},{"name":"8928紫","g":1.125}],"total_g":10211.9},"249":{"ingredients":[{"name":"L","g":8936.06},{"name":"白UJ100","g":685.42},{"name":"8922青藍","g":334.95},{"name":"6526螢藍","g":160.37},{"name":"7520綠","g":40.6}],"total_g":10157.4},"250":{"ingredients":[{"name":"L","g":7865.8},{"name":"白UJ100","g":1572.76},{"name":"6526螢藍","g":695.85},{"name":"7520綠","g":28.27},{"name":"黑","g":0.65},{"name":"8928紫","g":0.32}],"total_g":10163.65},"251":{"ingredients":[{"name":"NW3","g":43.86},{"name":"8529紫紅","g":1.75},{"name":"MP00430","g":4.39}],"total_g":50.0},"252":{"ingredients":[{"name":"D","g":45.3},{"name":"8529紫紅","g":2.44},{"name":"8840棕","g":2.26}],"total_g":50.0},"253":{"ingredients":[{"name":"D","g":46.43},{"name":"84250洋紅","g":3.25},{"name":"8840棕","g":0.25}],"total_g":49.93},"254":{"ingredients":[{"name":"D","g":45.76},{"name":"8526紅","g":3.66},{"name":"8529紫紅","g":0.41},{"name":"8840棕","g":0.2}],"total_g":50.03},"255":{"ingredients":[{"name":"L","g":47.17},{"name":"8526紅","g":1.89},{"name":"84250洋紅","g":0.94}],"total_g":50.0},"256":{"ingredients":[{"name":"L","g":48.08},{"name":"8526紅","g":1.92}],"total_g":50.0},"257":{"ingredients":[{"name":"L","g":46.99},{"name":"8920紅","g":1.88},{"name":"83150螢紅","g":1.13}],"total_g":50.0},"258":{"ingredients":[{"name":"L","g":47.98},{"name":"8526紅","g":1.06},{"name":"8920紅","g":0.58},{"name":"白UJ100","g":0.48}],"total_g":50.1},"259":{"ingredients":[{"name":"L","g":46.99},{"name":"8552橘","g":2.35},{"name":"8124黃","g":0.51},{"name":"8526紅","g":0.14}],"total_g":49.99},"260":{"ingredients":[{"name":"L","g":45.0},{"name":"白UJ100","g":3.15},{"name":"8552橘","g":1.77},{"name":"8126黃","g":0.82},{"name":"8844棕紅","g":0.17}],"total_g":50.91},"261":{"ingredients":[{"name":"L","g":45.09},{"name":"白UJ100","g":4.81},{"name":"8552橘","g":0.56},{"name":"黑","g":0.005}],"total_g":50.465},"262":{"ingredients":[{"name":"L","g":9119.9},{"name":"白UJ100","g":590.55},{"name":"8552橘","g":420.36},{"name":"8529紫紅","g":30.2}],"total_g":10161.01},"263":{"ingredients":[{"name":"L","g":45.46},{"name":"白UJ100","g":2.73},{"name":"8552橘","g":1.82},{"name":"8844棕紅","g":0.02},{"name":"8022黃","g":0.01}],"total_g":50.04},"264":{"ingredients":[{"name":"L稀","g":43.05},{"name":"白UJ100","g":0.06},{"name":"428粉","g":6.89}],"total_g":50.0},"265":{"ingredients":[{"name":"L稀","g":43.1},{"name":"白UJ100","g":0.86},{"name":"428粉","g":6.03}],"total_g":49.99},"266":{"ingredients":[{"name":"L稀","g":43.02},{"name":"白UJ100","g":1.82},{"name":"428粉","g":5.16}],"total_g":50.0},"267":{"ingredients":[{"name":"L","g":8790.4223},{"name":"白UJ100","g":521.0883},{"name":"83616螢桃","g":501.9037},{"name":"83131螢橘","g":217.9059},{"name":"428粉","g":151.1798}],"total_g":10182.5},"268":{"ingredients":[{"name":"L","g":8307.6285},{"name":"白UJ100","g":962.5566},{"name":"83188螢桃","g":273.4783},{"name":"83126螢黃","g":6.5},{"name":"8928紫","g":1.0298},{"name":"428粉","g":189.8368},{"name":"RTS21粉","g":35.15}],"total_g":9776.18},"269":{"ingredients":[{"name":"L","g":6654.0},{"name":"白UJ100","g":479.0},{"name":"83616螢桃","g":259.52},{"name":"83126螢黃","g":107.3},{"name":"8522紫","g":95.6},{"name":"8844棕紅","g":5.79},{"name":"428粉","g":59.56}],"total_g":7660.77},"270":{"ingredients":[{"name":"L","g":4493.43},{"name":"白UJ100","g":582.532},{"name":"83188螢桃","g":129.1351},{"name":"83126螢黃","g":12.5889},{"name":"84250洋紅","g":3.0855},{"name":"8928紫","g":1.0285}],"total_g":5221.8},"271":{"ingredients":[{"name":"L","g":8999.027},{"name":"白UJ100","g":1079.233},{"name":"84250洋紅","g":86.6222},{"name":"8123黃","g":8.1178}],"total_g":10173.0},"272":{"ingredients":[{"name":"L","g":8967.33},{"name":"白UJ100","g":1080.14},{"name":"84250洋紅","g":95.64},{"name":"8123黃","g":11.89}],"total_g":10155.0},"273":{"ingredients":[{"name":"L","g":41.8},{"name":"白UJ100","g":6.12},{"name":"8529紫紅","g":0.12},{"name":"8123黃","g":0.02}],"total_g":48.06},"274":{"ingredients":[{"name":"L","g":8978.1474},{"name":"白UJ100","g":1123.4039},{"name":"83126螢黃","g":35.6164},{"name":"8526紅","g":16.6542},{"name":"8928紫","g":3.028}],"total_g":10156.85},"275":{"ingredients":[{"name":"L","g":4576.7301},{"name":"白UJ100","g":571.7001},{"name":"8844棕紅","g":1.3299},{"name":"8123黃","g":0.7399}],"total_g":5150.5},"276":{"ingredients":[{"name":"L","g":1893.12},{"name":"白UJ100","g":152.93},{"name":"83131螢橘","g":54.27},{"name":"83188螢桃","g":48.66},{"name":"8526紅","g":26.59},{"name":"84250洋紅","g":10.59},{"name":"8844棕紅","g":5.18}],"total_g":2191.34},"277":{"ingredients":[{"name":"L","g":9090.76},{"name":"白UJ100","g":909.08},{"name":"8844棕紅","g":73.05},{"name":"8920紅","g":73.05},{"name":"8529紫紅","g":4.86}],"total_g":10150.8},"278":{"ingredients":[{"name":"L","g":4454.75},{"name":"白UJ100","g":445.99},{"name":"83616螢桃","g":142.14},{"name":"83150螢紅","g":77.32},{"name":"8844棕紅","g":36.05}],"total_g":5156.25},"279":{"ingredients":[{"name":"L","g":4431.06},{"name":"白UJ100","g":649.65},{"name":"83616螢桃","g":44.29},{"name":"8526紅","g":25.75},{"name":"8123黃","g":16.75}],"total_g":5167.5},"280":{"ingredients":[{"name":"L","g":4317.5668},{"name":"白UJ100","g":807.1546},{"name":"80406棕","g":106.362},{"name":"8526紅","g":17.3268},{"name":"8529紫紅","g":1.1098}],"total_g":5249.52},"281":{"ingredients":[{"name":"L","g":58.55},{"name":"白UJ100","g":6.22},{"name":"8552橘","g":0.09},{"name":"8844棕紅","g":0.08},{"name":"8840棕","g":0.07}],"total_g":65.01},"282":{"ingredients":[{"name":"L","g":4545.69},{"name":"白UJ100","g":616.02},{"name":"8844棕紅","g":14.97},{"name":"8529紫紅","g":2.99},{"name":"8123黃","g":2.14},{"name":"8840棕","g":1.07}],"total_g":5182.88},"283":{"ingredients":[{"name":"L","g":8578.78},{"name":"白UJ100","g":1574.47},{"name":"8552橘","g":40.54},{"name":"8920紅","g":22.48},{"name":"8840棕","g":4.13}],"total_g":10220.4},"284":{"ingredients":[{"name":"L","g":42.53},{"name":"白UJ100","g":7.29},{"name":"8552橘","g":0.18}],"total_g":50.0},"285":{"ingredients":[{"name":"L","g":8961.2023},{"name":"白UJ100","g":1074.768},{"name":"8844棕紅","g":89.2175},{"name":"8552橘","g":21.3798},{"name":"8022黃","g":21.2897},{"name":"8928紫","g":0.4927}],"total_g":10168.35},"286":{"ingredients":[{"name":"D","g":46.6},{"name":"8529紫紅","g":1.4},{"name":"白UJ100","g":1.07},{"name":"8526紅","g":0.93}],"total_g":50.0},"287":{"ingredients":[{"name":"D","g":4816.95},{"name":"8844棕紅","g":148.7},{"name":"8529紫紅","g":120.27},{"name":"白UJ100","g":82.24}],"total_g":5168.16},"288":{"ingredients":[{"name":"D","g":4881.2642},{"name":"白UJ100","g":114.09},{"name":"8844棕紅","g":92.3213},{"name":"8928紫","g":50.9077},{"name":"8522紫","g":21.4168}],"total_g":5160.0},"289":{"ingredients":[{"name":"D","g":4787.61},{"name":"白UJ100","g":257.38},{"name":"8529紫紅","g":48.95},{"name":"8844棕紅","g":40.95},{"name":"83131螢橘","g":16.58},{"name":"8928紫","g":5.53}],"total_g":5157.0},"290":{"ingredients":[{"name":"D","g":4968.94},{"name":"8844棕紅","g":97.73},{"name":"白UJ100","g":49.38},{"name":"8529紫紅","g":49.38},{"name":"8928紫","g":6.17}],"total_g":5171.6},"291":{"ingredients":[{"name":"L","g":4637.97},{"name":"白UJ100","g":430.75},{"name":"8844棕紅","g":40.99},{"name":"83131螢橘","g":33.57},{"name":"8928紫","g":7.61},{"name":"8529紫紅","g":5.12}],"total_g":5156.01},"292":{"ingredients":[{"name":"L","g":5623.71},{"name":"白UJ100","g":553.84},{"name":"8552橘","g":39.89},{"name":"83131螢橘","g":30.27},{"name":"8526紅","g":17.03},{"name":"8804黃","g":10.0},{"name":"8928紫","g":4.51}],"total_g":6279.25},"293":{"ingredients":[{"name":"L","g":9244.08},{"name":"白UJ100","g":790.88},{"name":"80406棕","g":57.52},{"name":"8844棕紅","g":32.87},{"name":"8920紅","g":32.79},{"name":"8022黃","g":3.75},{"name":"黑","g":3.37}],"total_g":10165.26},"294":{"ingredients":[{"name":"L","g":9028.64},{"name":"白UJ100","g":1063.6},{"name":"83150螢紅","g":23.24},{"name":"8844棕紅","g":21.91},{"name":"8123黃","g":11.72},{"name":"8928紫","g":5.98}],"total_g":10155.09},"295":{"ingredients":[{"name":"L","g":5118.37},{"name":"白UJ100","g":498.13},{"name":"8844棕紅","g":25.66},{"name":"8022黃","g":6.16},{"name":"83131螢橘","g":5.13},{"name":"UG綠","g":1.43},{"name":"8928紫","g":1.14}],"total_g":5656.02},"296":{"ingredients":[{"name":"D","g":9664.4416},{"name":"8844棕紅","g":320.554},{"name":"8529紫紅","g":182.8463},{"name":"84250洋紅","g":10.1581}],"total_g":10178.0},"297":{"ingredients":[{"name":"D","g":46.73},{"name":"8844棕紅","g":2.34},{"name":"8529紫紅","g":0.85}],"total_g":49.92},"298":{"ingredients":[{"name":"D","g":44.21},{"name":"8529紫紅","g":5.35},{"name":"8840棕","g":0.44}],"total_g":50.0},"299":{"ingredients":[{"name":"D","g":4730.79},{"name":"白UJ100","g":156.16},{"name":"8844棕紅","g":114.33},{"name":"8840棕","g":113.3},{"name":"8022黃","g":29.34},{"name":"8928紫","g":21.63}],"total_g":5165.55},"300":{"ingredients":[{"name":"D","g":8034.1168},{"name":"白UJ100","g":223.3217},{"name":"8840棕","g":201.1388},{"name":"83616螢桃","g":46.8224},{"name":"8022黃","g":29.1048},{"name":"黑","g":2.3155}],"total_g":8536.82},"301":{"ingredients":[{"name":"L","g":5909.0557},{"name":"白UJ100","g":370.483},{"name":"8804黃","g":81.4346},{"name":"8840棕","g":61.176},{"name":"83131螢橘","g":25.8366},{"name":"8022黃","g":12.4087},{"name":"黑","g":7.7054},{"name":"UG綠","g":1.4}],"total_g":6469.5},"302":{"ingredients":[{"name":"D","g":9545.04},{"name":"白UJ100","g":398.84},{"name":"8840棕","g":101.4},{"name":"8552橘","g":55.4},{"name":"8022黃","g":32.89},{"name":"黑","g":13.76},{"name":"8928紫","g":5.18}],"total_g":10152.51},"303":{"ingredients":[{"name":"L","g":8696.9949},{"name":"白UJ100","g":301.3983},{"name":"8840棕","g":67.4622},{"name":"8022黃","g":62.1459},{"name":"8920紅","g":52.9026},{"name":"UG綠","g":24.745},{"name":"8126黃","g":8.701}],"total_g":9214.35},"304":{"ingredients":[{"name":"L","g":5464.5454},{"name":"80406棕","g":559.3645},{"name":"白UJ100","g":209.2714},{"name":"8840棕","g":38.445},{"name":"83126螢黃","g":28.3714},{"name":"8552橘","g":19.8623}],"total_g":6319.86},"305":{"ingredients":[{"name":"L","g":4824.44},{"name":"白UJ100","g":126.61},{"name":"83126螢黃","g":85.07},{"name":"8844棕紅","g":75.7},{"name":"83150螢紅","g":24.79},{"name":"8928紫","g":8.64},{"name":"8022黃","g":6.03}],"total_g":5151.28},"306":{"ingredients":[{"name":"L","g":5108.84},{"name":"白UJ100","g":346.08},{"name":"83131螢橘","g":76.24},{"name":"8840棕","g":48.18},{"name":"83126螢黃","g":25.55},{"name":"8920紅","g":19.57},{"name":"7520綠","g":4.12},{"name":"84250洋紅","g":4.12}],"total_g":5632.7},"307":{"ingredients":[{"name":"L","g":4938.85},{"name":"白UJ100","g":202.74},{"name":"8920紅","g":12.36}],"total_g":5153.95},"308":{"ingredients":[{"name":"L","g":9376.3454},{"name":"白UJ100","g":613.1245},{"name":"8552橘","g":54.0467},{"name":"8840棕","g":53.6752},{"name":"8022黃","g":43.8742},{"name":"黑","g":3.6798},{"name":"8928紫","g":3.1844},{"name":"UG綠","g":2.0699}],"total_g":10150.0},"309":{"ingredients":[{"name":"L","g":5178.35},{"name":"白UJ100","g":605.53},{"name":"8840棕","g":34.23},{"name":"83616螢桃","g":6.8},{"name":"8022黃","g":5.13},{"name":"8123黃","g":3.75},{"name":"UG綠","g":1.71}],"total_g":5835.5},"310":{"ingredients":[{"name":"L","g":4731.82},{"name":"白UJ100","g":405.82},{"name":"8804黃","g":19.27},{"name":"8844棕紅","g":3.09}],"total_g":5160.0},"311":{"ingredients":[{"name":"D","g":48.5},{"name":"8840棕","g":1.21},{"name":"黑","g":0.29}],"total_g":50.0},"312":{"ingredients":[{"name":"D","g":4941.33},{"name":"白UJ100","g":91.49},{"name":"8840棕","g":91.49},{"name":"黑","g":19.53},{"name":"8022黃","g":6.67}],"total_g":5150.51},"313":{"ingredients":[{"name":"D","g":5532.01},{"name":"8840棕","g":169.86},{"name":"白UJ100","g":139.06},{"name":"UG綠","g":93.03},{"name":"8552橘","g":32.74},{"name":"8126黃","g":28.53}],"total_g":5995.23},"314":{"ingredients":[{"name":"D","g":4914.13},{"name":"白UJ100","g":132.72},{"name":"8840棕","g":88.68},{"name":"8022黃","g":10.35},{"name":"8928紫","g":4.83}],"total_g":5150.71},"315":{"ingredients":[{"name":"D","g":4804.64},{"name":"白UJ100","g":188.25},{"name":"80406棕","g":74.25},{"name":"8840棕","g":65.29},{"name":"83131螢橘","g":19.6},{"name":"UG綠","g":13.73},{"name":"8928紫","g":8.4}],"total_g":5174.16},"316":{"ingredients":[{"name":"L","g":9541.2467},{"name":"白UJ100","g":707.2647},{"name":"8844棕紅","g":35.9842},{"name":"8840棕","g":18.217},{"name":"8928紫","g":13.1808},{"name":"黑","g":7.2065}],"total_g":10323.1},"317":{"ingredients":[{"name":"L","g":9478.0},{"name":"白UJ100","g":638.0},{"name":"83126螢黃","g":50.31},{"name":"8840棕","g":28.06},{"name":"8844棕紅","g":17.03},{"name":"8802桃紅","g":8.64},{"name":"黑","g":4.83}],"total_g":10224.87},"318":{"ingredients":[{"name":"L","g":4682.4262},{"name":"白UJ100","g":518.121},{"name":"83188螢桃","g":10.0878},{"name":"8844棕紅","g":7.8977},{"name":"8123黃","g":4.4687},{"name":"8928紫","g":3.6191},{"name":"UG綠","g":2.2794}],"total_g":5228.9},"319":{"ingredients":[{"name":"L","g":62.61},{"name":"白UJ100","g":3.91},{"name":"8840棕","g":0.09}],"total_g":66.61},"320":{"ingredients":[{"name":"L","g":4734.0},{"name":"白UJ100","g":546.98},{"name":"8804黃","g":32.65},{"name":"8840棕","g":23.14},{"name":"UG綠","g":3.08}],"total_g":5339.85},"321":{"ingredients":[{"name":"L","g":5329.8},{"name":"白UJ100","g":825.82},{"name":"8840棕","g":19.77},{"name":"8123黃","g":1.39}],"total_g":6176.78},"322":{"ingredients":[{"name":"L","g":4678.26},{"name":"白UJ100","g":652.92},{"name":"8022黃","g":2.99},{"name":"8844棕紅","g":2.86}],"total_g":5337.03},"323":{"ingredients":[{"name":"L","g":45.45},{"name":"白UJ100","g":4.55}],"total_g":50.0},"324":{"ingredients":[{"name":"D","g":45.08},{"name":"8928紫","g":2.7},{"name":"85250藍","g":1.8},{"name":"黑","g":0.23},{"name":"白UJ100","g":0.18}],"total_g":49.99},"325":{"ingredients":[{"name":"D","g":4918.51},{"name":"白UJ100","g":118.15},{"name":"85250藍","g":62.13},{"name":"83115螢綠","g":29.43},{"name":"黑","g":28.32},{"name":"8928紫","g":5.06}],"total_g":5161.6},"326":{"ingredients":[{"name":"D","g":9620.32},{"name":"白UJ100","g":403.28},{"name":"黑","g":42.29},{"name":"8126黃","g":39.3},{"name":"83126螢黃","g":28.26},{"name":"8840棕","g":10.88},{"name":"8928紫","g":7.72}],"total_g":10152.05},"327":{"ingredients":[{"name":"D","g":5913.947},{"name":"白UJ100","g":222.8383},{"name":"黑","g":32.6568},{"name":"8928紫","g":17.2283},{"name":"8840棕","g":5.5295}],"total_g":6192.2},"328":{"ingredients":[{"name":"L","g":4829.69},{"name":"白UJ100","g":301.45},{"name":"黑","g":9.89},{"name":"8529紫紅","g":4.83},{"name":"8123黃","g":3.67},{"name":"8840棕","g":1.28}],"total_g":5150.81},"329":{"ingredients":[{"name":"L","g":9399.96},{"name":"白UJ100","g":720.75},{"name":"黑","g":13.63},{"name":"8126黃","g":13.18},{"name":"8840棕","g":2.32},{"name":"8928紫","g":1.16}],"total_g":10151.0},"330":{"ingredients":[{"name":"L","g":4931.41},{"name":"白UJ100","g":207.53},{"name":"黑","g":5.65},{"name":"85250藍","g":3.6},{"name":"UG綠","g":3.4}],"total_g":5151.59},"331":{"ingredients":[{"name":"L","g":4925.32},{"name":"白UJ100","g":203.21},{"name":"8804黃","g":17.41},{"name":"黑","g":4.6},{"name":"8840棕","g":0.77}],"total_g":5151.31},"332":{"ingredients":[{"name":"L","g":63.73},{"name":"白UJ100","g":3.69},{"name":"黑","g":0.07},{"name":"UG綠","g":0.03},{"name":"85250藍","g":0.02}],"total_g":67.54},"333":{"ingredients":[{"name":"L","g":4782.14},{"name":"白UJ100","g":346.5},{"name":"8844棕紅","g":14.11},{"name":"黑","g":13.59},{"name":"8928紫","g":8.06}],"total_g":5164.4},"334":{"ingredients":[{"name":"L","g":4832.43},{"name":"白UJ100","g":309.38},{"name":"8928紫","g":16.74},{"name":"黑","g":7.19},{"name":"8844棕紅","g":4.11}],"total_g":5169.85},"335":{"ingredients":[{"name":"D","g":46.84},{"name":"8802桃紅","g":1.87},{"name":"8928紫","g":0.82},{"name":"白UJ100","g":0.47}],"total_g":50.0},"336":{"ingredients":[{"name":"D","g":4784.89},{"name":"白UJ100","g":245.57},{"name":"8928紫","g":115.46},{"name":"85250藍","g":27.62}],"total_g":5173.54},"337":{"ingredients":[{"name":"D","g":46.0},{"name":"白UJ100","g":2.49},{"name":"8928紫","g":0.69},{"name":"8526紅","g":0.08}],"total_g":49.26},"338":{"ingredients":[{"name":"L","g":9471.5},{"name":"白UJ100","g":606.03},{"name":"8928紫","g":62.51},{"name":"8522紫","g":7.93},{"name":"黑","g":2.81}],"total_g":10150.78},"339":{"ingredients":[{"name":"L","g":9222.48},{"name":"白UJ100","g":807.78},{"name":"8529紫紅","g":115.69},{"name":"黑","g":4.76}],"total_g":10150.71},"340":{"ingredients":[{"name":"L","g":46.28},{"name":"白UJ100","g":3.33},{"name":"8529紫紅","g":0.4},{"name":"黑","g":0.02}],"total_g":50.03},"341":{"ingredients":[{"name":"L","g":62.0},{"name":"白UJ100","g":3.56},{"name":"8802桃紅","g":0.13},{"name":"8928紫","g":0.03}],"total_g":65.72},"342":{"ingredients":[{"name":"L","g":46.73},{"name":"白UJ100","g":2.0},{"name":"8802桃紅","g":1.03},{"name":"8928紫","g":0.19}],"total_g":49.95},"343":{"ingredients":[{"name":"L稀","g":42.77},{"name":"8522紫","g":2.57},{"name":"白UJ100","g":0.73},{"name":"8928紫","g":0.09},{"name":"440粉","g":3.85}],"total_g":50.01},"344":{"ingredients":[{"name":"D","g":48.78},{"name":"黑","g":1.22}],"total_g":50.0},"345":{"ingredients":[{"name":"D","g":4755.51},{"name":"UG綠","g":342.99},{"name":"黑","g":32.96},{"name":"白UJ100","g":20.14}],"total_g":5151.6},"346":{"ingredients":[{"name":"D","g":44.89},{"name":"UG綠","g":4.17},{"name":"85250藍","g":0.54},{"name":"白UJ100","g":0.27},{"name":"黑","g":0.13}],"total_g":50.0},"347":{"ingredients":[{"name":"D","g":45.24},{"name":"UG綠","g":3.66},{"name":"白UJ100","g":0.65},{"name":"8022黃","g":0.33},{"name":"黑","g":0.12}],"total_g":50.0},"348":{"ingredients":[{"name":"D","g":4736.5238},{"name":"UG綠","g":135.564},{"name":"83825螢藍","g":100.646},{"name":"白UJ100","g":100.5809},{"name":"8022黃","g":70.4633},{"name":"85250藍","g":16.432}],"total_g":5160.21},"349":{"ingredients":[{"name":"D","g":44.76},{"name":"8126黃","g":2.3},{"name":"UG綠","g":1.79},{"name":"白UJ100","g":0.58},{"name":"8552橘","g":0.45},{"name":"黑","g":0.12}],"total_g":50.0},"350":{"ingredients":[{"name":"D","g":46.42},{"name":"8126黃","g":2.79},{"name":"UG綠","g":0.68},{"name":"8552橘","g":0.12}],"total_g":50.01},"351":{"ingredients":[{"name":"L","g":9065.25},{"name":"8126黃","g":586.54},{"name":"白UJ100","g":419.71},{"name":"UG綠","g":58.8},{"name":"8552橘","g":22.3}],"total_g":10152.6},"352":{"ingredients":[{"name":"L","g":4809.14},{"name":"8126黃","g":179.18},{"name":"白UJ100","g":98.86},{"name":"UG綠","g":45.81},{"name":"8552橘","g":17.51}],"total_g":5150.5},"353":{"ingredients":[{"name":"L","g":9484.84},{"name":"80406棕","g":358.12},{"name":"白UJ100","g":314.8},{"name":"UG綠","g":40.89},{"name":"8804黃","g":20.0},{"name":"8552橘","g":17.15}],"total_g":10235.8},"354":{"ingredients":[{"name":"L","g":9639.71},{"name":"白UJ100","g":253.61},{"name":"8804黃","g":153.36},{"name":"UG綠","g":74.62},{"name":"8552橘","g":36.19}],"total_g":10157.49},"355":{"ingredients":[{"name":"D","g":8732.49},{"name":"80406棕","g":1418.98},{"name":"8804黃","g":72.0},{"name":"UG綠","g":30.46},{"name":"黑","g":4.06}],"total_g":10257.99},"356":{"ingredients":[{"name":"D","g":45.65},{"name":"8840棕","g":4.2},{"name":"84250洋紅","g":0.15}],"total_g":50.0},"357":{"ingredients":[{"name":"D","g":4725.56},{"name":"8844棕紅","g":235.92},{"name":"8840棕","g":193.53}],"total_g":5155.01},"358":{"ingredients":[{"name":"D","g":45.06},{"name":"8022黃","g":2.77},{"name":"8844棕紅","g":1.95},{"name":"白UJ100","g":0.23}],"total_g":50.01},"359":{"ingredients":[{"name":"L","g":46.3},{"name":"8552橘","g":3.7}],"total_g":50.0},"360":{"ingredients":[{"name":"D","g":46.6},{"name":"80406棕","g":2.33},{"name":"8022黃","g":0.93},{"name":"8844棕紅","g":0.14}],"total_g":50.0},"361":{"ingredients":[{"name":"D","g":47.09},{"name":"8022黃","g":1.42},{"name":"白UJ100","g":1.42},{"name":"8844棕紅","g":0.07}],"total_g":50.0},"362":{"ingredients":[{"name":"D","g":4899.71},{"name":"白UJ100","g":158.88},{"name":"8022黃","g":66.95},{"name":"8804黃","g":23.69},{"name":"8844棕紅","g":9.27}],"total_g":5158.5},"363":{"ingredients":[{"name":"L","g":47.64},{"name":"白UJ100","g":1.57},{"name":"8123黃","g":0.79}],"total_g":50.0},"364":{"ingredients":[{"name":"L","g":46.96},{"name":"白UJ100","g":1.5},{"name":"8126黃","g":1.21},{"name":"8022黃","g":0.34}],"total_g":50.01},"G01":{"ingredients":[{"name":"NW3","g":45.38},{"name":"85250藍","g":0.41},{"name":"黑","g":0.13},{"name":"MP00450","g":4.08}],"total_g":50.0},"G02":{"ingredients":[{"name":"NW3","g":47.94},{"name":"黑","g":0.14},{"name":"MP00431","g":1.92}],"total_g":50.0},"G03":{"ingredients":[{"name":"NW3","g":47.04},{"name":"8529紫紅","g":0.94},{"name":"黑","g":0.14},{"name":"MP00430","g":1.88}],"total_g":50.0},"G04":{"ingredients":[{"name":"NW3","g":46.24},{"name":"8529紫紅","g":1.85},{"name":"黑","g":0.06},{"name":"MP00430","g":1.85}],"total_g":50.0},"G05":{"ingredients":[{"name":"NW3","g":9968.0},{"name":"白UJ100","g":148.22},{"name":"8840棕","g":55.41},{"name":"8022黃","g":34.07},{"name":"160目閃鑽金","g":259.89}],"total_g":10465.59},"G06":{"ingredients":[{"name":"NW3","g":10347.0},{"name":"白UJ100","g":134.86},{"name":"8840棕","g":31.41},{"name":"黑","g":5.96},{"name":"160目閃鑽金","g":285.86}],"total_g":10805.09},"G07":{"ingredients":[{"name":"NW3","g":46.0},{"name":"8022黃","g":0.05},{"name":"84250洋紅","g":0.003},{"name":"5230粉","g":3.56},{"name":"S-100","g":0.38}],"total_g":49.993},"G08":{"ingredients":[{"name":"NW3","g":48.0},{"name":"8022黃","g":0.1},{"name":"84250洋紅","g":0.06},{"name":"5230粉","g":2.33},{"name":"S-100","g":0.78},{"name":"S-35","g":0.19}],"total_g":51.46},"G09":{"ingredients":[{"name":"NW3","g":48.0},{"name":"S-35","g":0.81},{"name":"S-100","g":0.81}],"total_g":49.62},"G10":{"ingredients":[{"name":"NW3","g":45.0},{"name":"84250洋紅","g":0.07},{"name":"80406棕","g":0.05},{"name":"5230粉","g":3.1},{"name":"S-100","g":0.39}],"total_g":48.61},"G11":{"ingredients":[{"name":"NW3","g":44.0},{"name":"閃鑽白80目","g":2.96},{"name":"821-閃金400目","g":1.46}],"total_g":48.42},"G12":{"ingredients":[{"name":"NW3","g":46.0},{"name":"821-閃金80目","g":1.57},{"name":"821-閃金400目","g":1.26}],"total_g":48.83},"J01":{"ingredients":[{"name":"乳白","g":57.0},{"name":"821染黑","g":0.59}],"total_g":57.59},"J02":{"ingredients":[{"name":"乳白","g":8990.2312},{"name":"8522紫","g":1400.2861},{"name":"83825螢藍","g":84.4416},{"name":"623染藍","g":9.8511}],"total_g":10484.81},"J03":{"ingredients":[{"name":"乳白","g":9492.28},{"name":"8522紫","g":683.44},{"name":"83825螢藍","g":149.86},{"name":"821染黑","g":18.27}],"total_g":10343.85},"J04":{"ingredients":[{"name":"乳白","g":10029.86},{"name":"417染桃","g":93.54},{"name":"606染天藍","g":37.95}],"total_g":10161.35},"J05":{"ingredients":[{"name":"乳白","g":10008.24},{"name":"417染桃","g":202.87},{"name":"70c染天藍","g":43.14}],"total_g":10254.25},"J06":{"ingredients":[{"name":"乳白","g":10048.0},{"name":"417染桃","g":271.48},{"name":"丰采螢藍","g":5.8}],"total_g":10325.28},"J07":{"ingredients":[{"name":"乳白","g":9869.53},{"name":"70c染天藍","g":279.3},{"name":"50C寶藍","g":23.06}],"total_g":10171.89},"J08":{"ingredients":[{"name":"乳白","g":9951.06},{"name":"70c染天藍","g":242.49}],"total_g":10193.55},"J09":{"ingredients":[{"name":"乳白","g":5702.6381},{"name":"70c染天藍","g":360.3309},{"name":"520染綠","g":139.7424},{"name":"50C寶藍","g":25.7386}],"total_g":6228.45},"J10":{"ingredients":[{"name":"乳白","g":9816.04},{"name":"70c染天藍","g":275.37},{"name":"520染綠","g":61.59}],"total_g":10153.0},"J11":{"ingredients":[{"name":"乳白","g":9967.78},{"name":"520染綠","g":208.97},{"name":"102染黃","g":60.25}],"total_g":10237.0},"J12":{"ingredients":[{"name":"乳白","g":14701.37},{"name":"D","g":1500.0},{"name":"402染棕","g":771.88},{"name":"52C染綠","g":161.89},{"name":"304染紅","g":40.68},{"name":"821染黑","g":37.95}],"total_g":17213.77},"J13":{"ingredients":[{"name":"乳白","g":6086.5764},{"name":"8840棕","g":53.4372},{"name":"8529紫紅","g":45.6364},{"name":"8552橘","g":5.58},{"name":"8928紫","g":2.0}],"total_g":6193.23},"J14":{"ingredients":[{"name":"乳白","g":4954.2477},{"name":"102染黃","g":103.2474},{"name":"402染棕","g":92.5049},{"name":"52C染綠","g":16.7}],"total_g":5166.7},"J15":{"ingredients":[{"name":"乳白","g":10048.5},{"name":"102染黃","g":183.27}],"total_g":10231.77},"J16":{"ingredients":[{"name":"乳白","g":49.11},{"name":"4529螢橘","g":0.25},{"name":"210染橘","g":0.65}],"total_g":50.01},"J17":{"ingredients":[{"name":"乳白","g":9853.62},{"name":"4529螢橘","g":99.47},{"name":"210染橘","g":237.91}],"total_g":10191.0},"J18":{"ingredients":[{"name":"乳白","g":50.0},{"name":"丰采染螢光黃","g":3.71},{"name":"sj-18染螢光綠","g":1.76}],"total_g":55.47},"Super White":{"ingredients":[{"name":"外電白","g":27.5},{"name":"83825螢藍","g":0.17},{"name":"8522紫","g":0.14},{"name":"431L","g":55.0},{"name":"432D","g":10.0}],"total_g":92.81},"Rich Black":{"ingredients":[{"name":"432D","g":40.0},{"name":"8519黑 ","g":1.4}],"total_g":41.4},"Nude1":{"ingredients":[{"name":"乳白","g":10100.739},{"name":"外電白","g":61.111},{"name":"8922青藍","g":2.1}],"total_g":10163.95},"Nude2":{"ingredients":[{"name":"乳白","g":10086.4544},{"name":"8552橘","g":6.502},{"name":"UG綠","g":0.8714},{"name":"8022黃","g":0.8714},{"name":"UJ100白","g":55.3007}],"total_g":10150.0},"Nude3":{"ingredients":[{"name":"乳白","g":5801.97},{"name":"8552橘","g":8.3},{"name":"8022黃","g":2.22},{"name":"UG綠","g":1.08},{"name":"8928紫","g":0.81},{"name":"UJ100白","g":44.5}],"total_g":5858.88},"Nude4":{"ingredients":[{"name":"乳白","g":10064.9512},{"name":"8920紅","g":11.0714},{"name":"8022黃","g":3.1201},{"name":"UG綠","g":2.4156},{"name":"UJ100白","g":68.4417}],"total_g":10150.0},"Nude5":{"ingredients":[{"name":"乳白","g":10085.3511},{"name":"8552橘","g":2.4318},{"name":"8920紅","g":2.2941},{"name":"8124黃","g":1.1471},{"name":"8928紫","g":0.2753},{"name":"UJ100白","g":58.5006}],"total_g":10150.0},"Nude6":{"ingredients":[{"name":"乳白","g":10077.3015},{"name":"8804黃","g":11.9673},{"name":"8526紅","g":2.7491},{"name":"8928紫","g":0.0764},{"name":"UJ100白","g":64.1458}],"total_g":10156.24}};
+
+window.recipes=JSON.parse(JSON.stringify(RAW)); var recipes=window.recipes;
+
+// Helpers
+function series(id){if(/^\d+$/.test(id))return'200色';if(id.startsWith('G'))return'G系列';if(id.startsWith('J'))return'J系列';if(id.toLowerCase().startsWith('nude'))return'Nude';return'特殊';}
+const SER=['全部','200色','G系列','J系列','Nude','特殊'];
+const SC={'200色':'s-num','G系列':'s-g','J系列':'s-j','Nude':'s-nude','特殊':'s-sp'};
+const CAT_BG={'基料':'rgba(200,169,110,.15)','色漿':'rgba(126,184,201,.15)','螢光粉':'rgba(169,142,212,.15)','染料':'rgba(224,136,112,.15)','亮粉':'rgba(110,196,168,.15)','未分類':'transparent'};
+
+function sortI(ings){return[...ings].sort((a,b)=>(getIC(a.name).order||9)-(getIC(b.name).order||9)||(b.g-a.g));}
+function allIngs(){const s=new Set();Object.values(recipes).forEach(r=>r.ingredients.forEach(i=>s.add(i.name)));return s.size;}
+function sortedKeys(keys){return keys.sort((a,b)=>{const so={'200色':1,'G系列':2,'J系列':3,'Nude':4,'特殊':5};const sa=series(a),sb=series(b);if(so[sa]!==so[sb])return so[sa]-so[sb];return a.localeCompare(b,'zh-TW',{numeric:true});});}
+
+// State
+let curSer={search:'全部',manage:'全部'};
+let curColor=null,editColor=null;
+
+// ===== LOCALSTORAGE PERSISTENCE =====
+const LS_KEY = 'ap_recipes_v1';
+
+function saveToLS() {
+  // Save to localStorage only (fast, no quota)
+  // Cloud sync happens explicitly via saveToCloud() after user actions
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(recipes));
+  } catch(e) {
+    console.warn('localStorage save failed:', e);
+  }
+}
+
+function loadFromLS() {
+  // localStorage used as fast initial load / offline fallback
+  // Cloud sync (getDoc) runs once on page load via reloadFromCloud()
+  try {
+    const saved = localStorage.getItem(LS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Object.keys(parsed).length > 0) {
+        recipes = parsed;
+        return true;
+      }
+    }
+  } catch(e) {
+    console.warn('localStorage load failed:', e);
+  }
+  return false;
+}
+
+function resetToDefault() {
+  if (!confirm('確定要還原成原始配方資料嗎？\n所有在網站上新增/修改的配方將會消失！')) return;
+  recipes = JSON.parse(JSON.stringify(RAW));
+  saveToLS();cloudSync();
+  refreshAll();
+  toast('已還原成原始配方資料');
+}
+
+function exportRecipes() {
+  // Export current recipes as JSON file for backup
+  const data = JSON.stringify(recipes, null, 2);
+  const blob = new Blob([data], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'AP配方備份_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('備份檔案已下載 ✓');
+}
+
+function importJsonBackup(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (typeof parsed !== 'object' || Object.keys(parsed).length === 0) throw new Error('格式錯誤');
+      recipes = parsed;
+      saveToLS();cloudSync();
+      refreshAll();
+      toast('備份還原成功，共 ' + Object.keys(parsed).length + ' 筆配方 ✓');
+    } catch(err) {
+      alert('還原失敗：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+
+// Called by Firebase module to apply cloud data to local variable
+
+// Unified cloud sync - always uses latest recipes
+function cloudSync() {
+  window.recipes = recipes;
+  if (window.saveToCloud && window._fsReady) {
+    window.saveToCloud(recipes, customers, materials);
+  } else {
+    window._pendingCloudSave = true;
+  }
+}
+
+// ── 材料表初始化（必須在 init() 之前）──
+const MAT_CAT_COLORS = {
+  '基料':  {bg:'rgba(200,169,110,.15)', color:'var(--accent)'},
+  '色漿':  {bg:'rgba(126,184,201,.15)', color:'var(--accent2)'},
+  '螢光粉':{bg:'rgba(169,142,212,.15)', color:'var(--c3)'},
+  '染料':  {bg:'rgba(224,136,112,.15)', color:'var(--c4)'},
+  '亮粉':  {bg:'rgba(110,196,168,.15)', color:'var(--c5)'},
+  '其他':  {bg:'rgba(122,127,150,.15)', color:'var(--text-muted)'},
+};
+function getDefaultMaterials() {
+  const list = [];
+  for (const [cat, items] of Object.entries(CATS)) {
+    for (const name of items) {
+      list.push({ name, cat, note:'' });
+    }
+  }
+  return list;
+}
+
+let materials = JSON.parse(localStorage.getItem('ap_materials') || 'null');
+if (!materials) {
+  materials = getDefaultMaterials();
+  localStorage.setItem('ap_materials', JSON.stringify(materials));
+}
+
+// 橋接函數：讓 Firebase module 可以安全存取主程式的 recipes 與 customers 變數
+window._getRecipes = function() {
+  return recipes;
+};
+window._applyRecipes = function(cloudData) {
+  recipes = cloudData;
+  window.recipes = cloudData;
+  saveToLS();
+  refreshAll();
+};
+window.applyCloudRecipes = window._applyRecipes;
+
+window._getMaterials = function() { return materials; };
+window._applyMaterials = function(cloudMat) {
+  if (!cloudMat || !Array.isArray(cloudMat)) return;
+  materials = cloudMat;
+  saveMaterials();
+  if (typeof renderMaterials === 'function') renderMaterials();
+};
+
+window._getCustomers = function() {
+  return customers;
+};
+window._applyCustomers = function(cloudCust) {
+  if (!cloudCust || !Array.isArray(cloudCust)) return;
+  customers = cloudCust;
+  saveCustomers();
+  buildCustomerSelect();
+  renderCustomerList();
+  switchCustomer(currentCustomer);
+};
+
+
+// ===== 客戶管理 =====
+const DEFAULT_CUSTOMERS = [
+  { id:'all',       name:'全部',       patterns:[] },
+  { id:'apres',     name:'APRES',      patterns:['num:201-364'] },
+  { id:'sheergel',  name:'Sheer Gel',  patterns:['prefix:S'] },
+  { id:'gseries',   name:'G系列客戶',  patterns:['prefix:G'] },
+  { id:'susana',    name:'Susana',     patterns:['prefix:CE'] },
+];
+
+let customers = JSON.parse(localStorage.getItem('ap_customers') || 'null') || DEFAULT_CUSTOMERS;
+let currentCustomer = localStorage.getItem('ap_current_customer') || 'all';
+
+function saveCustomers() {
+  localStorage.setItem('ap_customers', JSON.stringify(customers));
+}
+
+function switchCustomer(id) {
+  currentCustomer = id;
+  localStorage.setItem('ap_current_customer', id);
+  filterSearch();
+  filterManage();
+  // Update stat label
+  const c = customers.find(x => x.id === id);
+  const label = c && c.id !== 'all' ? c.name + ' 的配方' : '全部配方';
+  document.getElementById('s-results').title = label;
+  showCustomerBadge(c);
+}
+
+function showCustomerBadge(c) {
+  const badge = document.getElementById('customer-badge');
+  if (!badge) return;
+  if (!c || c.id === 'all') { badge.style.display='none'; return; }
+  badge.textContent = c.name;
+  badge.style.display = 'inline-block';
+}
+
+function colorMatchesCustomer(colorId, customerId) {
+  if (customerId === 'all') return true;
+  const c = customers.find(x => x.id === customerId);
+  if (!c || !c.patterns.length) return true;
+  return c.patterns.some(p => {
+    if (p.startsWith('num:')) {
+      const [, range] = p.split(':');
+      const [min, max] = range.split('-').map(Number);
+      const num = parseInt(colorId);
+      return !isNaN(num) && num >= min && num <= max;
+    }
+    if (p.startsWith('prefix:')) {
+      const prefix = p.split(':')[1];
+      return colorId.toUpperCase().startsWith(prefix.toUpperCase());
+    }
+    return false;
+  });
+}
+
+function buildCustomerSelect() {
+  const sel = document.getElementById('customer-select');
+  if (!sel) return;
+  sel.innerHTML = customers.map(c =>
+    `<option value="${c.id}" ${c.id===currentCustomer?'selected':''}>${c.name}</option>`
+  ).join('');
+}
+
+// 初始化客戶選單
+function initCustomers() {
+  buildCustomerSelect();
+  showCustomerBadge(customers.find(x=>x.id===currentCustomer));
+}
+
+function init(){
+  // Load saved data from localStorage
+  loadFromLS();
+  document.getElementById('s-total').textContent=Object.keys(recipes).length;
+  document.getElementById('s-ings').textContent=allIngs();
+  buildTabs('stabs-search','search');buildTabs('stabs-manage','manage');
+  initCustomers();
+  renderCustomerList();
+  initMaterials();
+  filterSearch();filterManage();renderEditR('');
+}
+
+function buildTabs(cid,page){
+  document.getElementById(cid).innerHTML=SER.map(s=>`<button class="series-tab${s==='全部'?' active':''}" onclick="setSer('${page}','${s}',this)">${s}</button>`).join('');
+}
+function setSer(page,s,el){
+  curSer[page]=s;
+  el.closest('.series-tabs').querySelectorAll('.series-tab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(page==='search')filterSearch();else filterManage();
+}
+
+function filterSearch(){
+  const q=document.getElementById('sinp').value.trim().toLowerCase();
+  const keys=sortedKeys(Object.keys(recipes).filter(n=>{
+    if(!colorMatchesCustomer(n, currentCustomer))return false;
+    if(curSer.search!=='全部'&&series(n)!==curSer.search)return false;
+    if(!q)return true;
+    return n.toLowerCase().includes(q)||recipes[n].ingredients.some(i=>i.name.toLowerCase().includes(q));
+  }));
+  document.getElementById('s-results').textContent=keys.length;
+  renderGrid('grid-search',keys,false);
+}
+function filterManage(){
+  const q=document.getElementById('minp').value.trim().toLowerCase();
+  const keys=sortedKeys(Object.keys(recipes).filter(n=>{
+    if(!colorMatchesCustomer(n, currentCustomer))return false;
+    if(curSer.manage!=='全部'&&series(n)!==curSer.manage)return false;
+    if(!q)return true;
+    return n.toLowerCase().includes(q)||recipes[n].ingredients.some(i=>i.name.toLowerCase().includes(q));
+  }));
+  renderGrid('grid-manage',keys,true);
+}
+function clearSearch(){document.getElementById('sinp').value='';filterSearch();}
+
+function renderGrid(cid,keys,isM){
+  const c=document.getElementById(cid);
+  if(!keys.length){c.innerHTML='<div class="empty"><div style="font-size:42px">🔍</div>找不到符合的配方</div>';return;}
+  c.innerHTML=keys.map(n=>{
+    const r=recipes[n];if(!r)return'';
+    const si=sortI(r.ingredients);
+    const prev=si.slice(0,4).map(i=>i.name).join('、')+(si.length>4?`…+${si.length-4}`:'');
+    const sr=series(n);const sc=SC[sr]||'s-sp';
+    const fn=isM?`openEdit('${n}')`:`openDetail('${n}')`;
+    return`<div class="recipe-card" onclick="${fn}"><div class="recipe-card-num">${n}</div><div class="recipe-card-ingredients">${prev}</div><div class="recipe-card-footer"><span class="sbadge ${sc}">${sr}</span><span style="font-size:10px">${r.ingredients.length}種 / ${r.total_g.toFixed(2)}g</span></div></div>`;
+  }).join('');
+}
+
+// Detail modal
+function openDetail(n){
+  curColor=n;
+  document.getElementById('mtitle').textContent=`色號 ${n}`;
+  const r=recipes[n];
+  document.getElementById('sc-inp').value=r.total_g.toFixed(4);
+  renderMTable(r.total_g);
+  document.getElementById('detail-modal').classList.add('open');
+}
+function renderMTable(tt){
+  const r=recipes[curColor];if(!r)return;
+  const f=tt/r.total_g;
+  document.getElementById('sc-fac').textContent=f.toFixed(4)+'×';
+  const si=sortI(r.ingredients);
+  document.getElementById('mtbody').innerHTML=si.map(ing=>{
+    const sc=ing.g*f,pct=(ing.g/r.total_g*100).toFixed(2);
+    const cat=getIC(ing.name).cat||'未分類';
+    return`<tr><td>${ing.name}</td><td><span class="ctag c${cat}">${cat}</span></td><td class="ing-g">${sc.toFixed(4)}</td><td class="ing-pct">${pct}%</td><td><div class="ibar"><div class="ibar-fill" style="width:${pct}%"></div></div></td></tr>`;
+  }).join('')+`<tr class="total-row"><td colspan="2">總量</td><td>${tt.toFixed(4)}</td><td>100%</td><td></td></tr>`;
+}
+function updateScale(){const v=parseFloat(document.getElementById('sc-inp').value);if(v>0)renderMTable(v);}
+function addToOrd(){
+  if(!curColor)return;showPage('order');
+  const inp=document.querySelector('#orows .orow input[type=text]');
+  if(inp&&!inp.value)inp.value=curColor;
+  else{addORow();setTimeout(()=>{const all=document.querySelectorAll('#orows .orow');all[all.length-1].querySelector('input[type=text]').value=curColor;},50);}
+  closeM('detail-modal');toast(`已加入訂單 — ${curColor}`);
+}
+function editCur(){closeM('detail-modal');openEdit(curColor);}
+
+// Edit modal
+function openAddModal(){
+  editColor=null;
+  document.getElementById('em-title').textContent='新增配方';
+  document.getElementById('em-num').value='';document.getElementById('em-num').removeAttribute('readonly');
+  document.getElementById('del-btn').style.display='none';
+  document.getElementById('em-ings').innerHTML='';addIngRow();
+  document.getElementById('edit-modal').classList.add('open');
+}
+function openEdit(n){
+  editColor=n;const r=recipes[n];
+  document.getElementById('em-title').textContent=`修正配方 ${n}`;
+  document.getElementById('em-num').value=n;document.getElementById('em-num').setAttribute('readonly',true);
+  document.getElementById('del-btn').style.display='inline-flex';
+  document.getElementById('em-ings').innerHTML='';
+  sortI(r.ingredients).forEach(ing=>addIngRow(ing.name,ing.g));
+  document.getElementById('edit-modal').classList.add('open');
+}
+function addIngRow(name='',g=''){
+  const c=document.getElementById('em-ings');
+
+  // 優先用 materials 清單，如果還沒載入就用 CATS
+  const catOrder = ['基料','色漿','螢光粉','染料','亮粉','其他'];
+  let opts = '';
+  if (typeof materials !== 'undefined' && materials.length > 0) {
+    // 用 materials 分組建選單
+    const groups = {};
+    for (const m of materials) {
+      if (!groups[m.cat]) groups[m.cat] = [];
+      groups[m.cat].push(m.name);
+    }
+    opts = catOrder.filter(cat => groups[cat]).map(cat =>
+      `<optgroup label="▸${cat}">${groups[cat].sort().map(i=>`<option value="${i}"${i===name?'selected':''}>${i}</option>`).join('')}</optgroup>`
+    ).join('');
+  } else {
+    // fallback: 用 CATS
+    opts = Object.entries(CATS).map(([cat,items])=>
+      `<optgroup label="▸${cat}">${items.map(i=>`<option value="${i}"${i===name?'selected':''}>${i}</option>`).join('')}</optgroup>`
+    ).join('');
+  }
+
+  const row=document.createElement('div');row.className='form-row';
+  row.innerHTML=`<select class="finp" style="flex:1.1"><option value="">選擇原料</option>${opts}</select><input class="finp" type="text" placeholder="原料名稱" value="${name}" style="flex:1"><input class="finp num" type="number" placeholder="g" min="0" step="0.0001" value="${g}"><button class="rmbtn" onclick="this.parentElement.remove()">✕</button>`;
+  const sel=row.querySelector('select'),txt=row.querySelectorAll('input')[0];
+  sel.onchange=()=>{if(sel.value)txt.value=sel.value;};
+  if(name){const opt=[...sel.options].find(o=>o.value===name);if(!opt)sel.value='';}
+  c.appendChild(row);
+}
+function saveR(){
+  const nv=document.getElementById('em-num').value.trim();if(!nv){alert('請輸入色號');return;}
+  const rows=document.querySelectorAll('#em-ings .form-row');
+  const ings=[];let tot=0;
+  for(const row of rows){const nm=row.querySelectorAll('input')[0].value.trim(),g=parseFloat(row.querySelectorAll('input')[1].value);if(nm&&g>0){ings.push({name:nm,g});tot+=g;}}
+  if(!ings.length){alert('請至少新增一種原料');return;}
+  recipes[nv]={ingredients:sortI(ings),total_g:tot};
+  saveToLS();cloudSync();
+  closeM('edit-modal');refreshAll();toast(`配方 ${nv} 已儲存 ✓`);
+}
+function delR(){
+  if(!editColor)return;if(!confirm(`確定刪除 ${editColor}？`))return;
+  delete recipes[editColor];saveToLS();cloudSync();closeM('edit-modal');refreshAll();toast(`配方 ${editColor} 已刪除`);
+}
+function refreshAll(){
+  document.getElementById('s-total').textContent=Object.keys(recipes).length;
+  document.getElementById('s-ings').textContent=allIngs();
+  filterSearch();filterManage();renderEditR(document.getElementById('einp').value);
+}
+
+// Edit page
+function filterEditSearch(){renderEditR(document.getElementById('einp').value.trim());}
+function renderEditR(q){
+  const keys=sortedKeys(Object.keys(recipes).filter(n=>!q||n.toLowerCase().includes(q.toLowerCase())||recipes[n].ingredients.some(i=>i.name.toLowerCase().includes(q.toLowerCase())))).slice(0,45);
+  document.getElementById('edit-results').innerHTML=keys.map(n=>{
+    const sr=series(n);const sc=SC[sr]||'s-sp';
+    return`<button class="btn sec" onclick="openEdit('${n}')" style="padding:5px 10px;font-size:12px"><span class="sbadge ${sc}" style="margin-right:3px">${sr}</span>${n}</button>`;
+  }).join('');
+}
+
+// Order page
+function makeOptHtml(){
+  const keys=sortedKeys(Object.keys(recipes));
+  const grps={'200色':[],'G系列':[],'J系列':[],'Nude':[],'特殊':[]};
+  keys.forEach(k=>grps[series(k)].push(k));
+  return'<option value="">-- 選擇色號 --</option>'+Object.entries(grps).filter(([,v])=>v.length).map(([g,v])=>`<optgroup label="▸${g}">${v.map(k=>`<option value="${k}">${k}</option>`).join('')}</optgroup>`).join('');
+}
+function populateOSel(){const h=makeOptHtml();document.querySelectorAll('#orows select').forEach(s=>{const cv=s.value;s.innerHTML=h;s.value=cv;});}
+function addORow(){
+  const c=document.getElementById('orows');const row=document.createElement('div');row.className='orow';
+  row.innerHTML=`<div style="position:relative;width:185px;flex:none">
+    <input class="finp" type="text" placeholder="輸入色號…" autocomplete="off" oninput="showColorSuggest(this)" onblur="setTimeout(()=>hideColorSuggest(this),200)" style="width:100%">
+    <div class="color-suggest" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:50"></div>
+  </div>
+  <input class="finp num" type="number" placeholder="數量(kg)" min="0.001" step="0.001">
+  <button class="btn sec" onclick="rmORow(this)">✕</button>`;
+  c.appendChild(row);
+}
+function rmORow(btn){const rows=document.querySelectorAll('#orows .orow');if(rows.length>1)btn.parentElement.remove();}
+function clearOrd(){document.getElementById('orows').innerHTML='';addORow();document.getElementById('prod-out').innerHTML='';badge(0);}
+
+function genProd(){
+  const rows=document.querySelectorAll('#orows .orow');
+  const orders=[];
+  for(const row of rows){const cn=row.querySelector('input[type=text]').value.trim(),qty=parseFloat(row.querySelector('input[type=number]').value);if(cn&&recipes[cn]&&qty>0)orders.push({cn,qty});else if(cn&&!recipes[cn]&&qty>0){alert('找不到色號：'+cn+'\n請確認色號是否正確');return;}}
+  if(!orders.length){alert('請輸入有效訂單');return;}
+  // 依色號順序排列（同 sortedKeys 邏輯）
+  orders.sort((a,b)=>{
+    const so={'200色':1,'G系列':2,'J系列':3,'Nude':4,'特殊':5};
+    const sa=series(a.cn),sb=series(b.cn);
+    if(so[sa]!==so[sb]) return (so[sa]||9)-(so[sb]||9);
+    return a.cn.localeCompare(b.cn,'zh-TW',{numeric:true});
+  });
+  const imap={};
+  const details=orders.map(o=>{
+    const r=recipes[o.cn];if(!r)return null;
+    const fac=(o.qty*1000)/r.total_g;
+    const si=sortI(r.ingredients);
+    const ings=si.map(ing=>{const sg=ing.g*fac,sk=sg/1000;imap[ing.name]=(imap[ing.name]||0)+sk;return{name:ing.name,cat:getIC(ing.name).cat||'未分類',g:sg,kg:sk};});
+    return{cn:o.cn,qty:o.qty,ings};
+  }).filter(Boolean);
+
+  const now=new Date(),ds=`${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+  const totKg=orders.reduce((s,o)=>s+o.qty,0);
+
+  let html=`<div class="sbox" id="prod-res"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;flex-wrap:wrap;gap:7px"><div class="stitle" style="margin:0">生產配方表 — ${ds}</div><button class="btn ok no-print" onclick="window.print()">🖨 列印</button>
+        <button class="btn sec no-print" onclick="exportProductionExcel()">📊 匯出 Excel</button></div>
+  <div class="stats-row" style="margin-bottom:13px">
+    <div class="stat-card"><div class="stat-label">品項</div><div class="stat-value">${details.length}</div></div>
+    <div class="stat-card"><div class="stat-label">總量</div><div class="stat-value" style="font-size:16px">${totKg.toFixed(3)} kg</div></div>
+    <div class="stat-card"><div class="stat-label">原料種類</div><div class="stat-value">${Object.keys(imap).length}</div></div>
+  </div>
+  <div style="margin-bottom:16px"><div class="stitle">各色號詳細用料（基料→色漿→螢光粉→染料→亮粉）</div>
+  <table class="ptable"><thead><tr><th>色號</th><th>訂單量(kg)</th><th>分類</th><th>原料</th><th>用量(g)</th><th>用量(kg)</th></tr></thead><tbody>`;
+
+  details.forEach(o=>{
+    o.ings.forEach((ing,idx)=>{
+      const bg=CAT_BG[ing.cat]||'transparent';
+      html+=`<tr>${idx===0?`<td class="cnum" rowspan="${o.ings.length}">${o.cn}</td><td class="qkg" rowspan="${o.ings.length}">${o.qty.toFixed(3)}</td>`:''}<td><span style="background:${bg};padding:1px 5px;border-radius:3px;font-size:11px">${ing.cat}</span></td><td>${ing.name}</td><td class="qkg">${ing.g.toFixed(4)}</td><td class="qkg">${ing.kg.toFixed(6)}</td></tr>`;
+    });
+    html+=`<tr class="ssum"><td colspan="3">小計</td><td colspan="2">${(o.qty*1000).toFixed(4)} g</td><td>${o.qty.toFixed(6)} kg</td></tr>`;
+  });
+
+  html+=`</tbody></table></div><div><div class="stitle">原料匯總需求（依分類）</div>
+  <table class="ptable"><thead><tr><th>分類</th><th>原料</th><th>總需求(g)</th><th>總需求(kg)</th></tr></thead><tbody>`;
+
+  const sortedI=Object.entries(imap).sort((a,b)=>(getIC(a[0]).order||9)-(getIC(b[0]).order||9)||(b[1]-a[1]));
+  sortedI.forEach(([n,kg])=>{const cat=getIC(n).cat||'未分類';const bg=CAT_BG[cat]||'transparent';html+=`<tr><td><span style="background:${bg};padding:1px 5px;border-radius:3px;font-size:11px">${cat}</span></td><td>${n}</td><td class="qkg">${(kg*1000).toFixed(4)}</td><td class="qkg">${kg.toFixed(6)}</td></tr>`;});
+  const totI=sortedI.reduce((s,[,v])=>s+v,0);
+  html+=`</tbody><tfoot><tr class="ssum"><td colspan="2">總計</td><td>${(totI*1000).toFixed(4)} g</td><td>${totI.toFixed(6)} kg</td></tr></tfoot></table></div></div>`;
+
+  // Store for Excel export
+  window._prodData = {orderDetails:details, ingMap:imap, dateStr:ds, totalKg:totKg};
+  document.getElementById('prod-out').innerHTML=html;
+  document.getElementById('prod-out').scrollIntoView({behavior:'smooth'});
+  badge(orders.length);
+}
+function badge(n){const b=document.getElementById('obadge');if(n>0){b.textContent=n;b.style.display='inline-block';}else b.style.display='none';}
+
+// Nav
+function showPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  document.getElementById('btn-'+n).classList.add('active');
+  if(n==='search') document.getElementById('s-results').textContent=Object.keys(recipes).filter(k=>curSer.search==='全部'||series(k)===curSer.search).length;
+  if(n==='materials') renderMaterials();
+}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+
+init();
+document.getElementById('s-results').textContent=Object.keys(recipes).length;
+// 確保材料表數字在頁面載入後更新
+setTimeout(updateMatStats, 500);
+
+// ===== EXCEL IMPORT =====
+let pendingImport = [];
+
+function importExcel(input) {
+  const file = input.files[0];
+  if (!file) return;
+  input.value = '';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      parseXlsx(e.target.result);
+    } catch(err) {
+      alert('讀取失敗：' + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseXlsx(buffer) {
+  // Parse xlsx manually using the same layout as the original file
+  // Use SheetJS (xlsx) via CDN
+  if (typeof XLSX === 'undefined') {
+    // Load SheetJS dynamically
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => parseXlsxWithLib(buffer);
+    script.onerror = () => alert('無法載入 Excel 解析套件，請確認網路連線');
+    document.head.appendChild(script);
+  } else {
+    parseXlsxWithLib(buffer);
+  }
+  // Store buffer for retry
+  window._xlsxBuffer = buffer;
+}
+
+function parseXlsxWithLib(buffer) {
+  const data = new Uint8Array(buffer);
+  const wb = XLSX.read(data, {type: 'array', cellFormula: false, cellNF: false});
+
+  // Try 配方製作表 first, then first sheet
+  const wsName = wb.SheetNames.find(n => n.includes('配方')) || wb.SheetNames[0];
+  const ws = wb.Sheets[wsName];
+  const rows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: null, raw: true});
+
+  const found = {};
+
+  // AUTO-DETECT block positions:
+  // Scan every row for cells where the NEXT row has '色料' in same column
+  // This works regardless of column layout or file type
+  for (let i = 0; i < rows.length - 1; i++) {
+    const row = rows[i];
+    const nextRow = rows[i + 1];
+    if (!row || !nextRow) continue;
+
+    for (let cn = 0; cn < row.length; cn++) {
+      const val = row[cn];
+      if (!val && val !== 0) continue;
+
+      // Check if next row has '色料' at same column
+      if (nextRow[cn] !== '色料') continue;
+
+      // Check if this cell is a valid color ID
+      const valStr = String(val).trim();
+      const isNum = typeof val === 'number' && val >= 100 && Number.isInteger(val);
+      // Match: 201-999, G01-G99, J01-J18, Nude1-6, S401+, Super, Rich, or any word+number
+      const isStr = typeof val === 'string' && /^[A-Za-z一-龥]|^\d{3,}/.test(valStr) &&
+                    !['色料','總量','g','0'].includes(valStr);
+
+      if (!isNum && !isStr) continue;
+
+      const colorId = isNum ? String(Math.round(val)) : valStr;
+
+      // Find g column: column right after cn that has numeric header 'g' or just cn+1
+      const cg = cn + 1;
+
+      // Parse ingredients
+      const ingredients = [];
+      let total = null;
+      for (let j = i + 2; j < Math.min(i + 13, rows.length); j++) {
+        const r = rows[j];
+        if (!r) break;
+        const name = r[cn];
+        const gVal = r[cg];
+
+        if (name === '總量') {
+          total = typeof gVal === 'number' ? gVal : null;
+          break;
+        }
+        // Skip zero rows, empty rows
+        if (!name || name === 0 || name === '色料') continue;
+        if (typeof gVal !== 'number' || gVal <= 0) continue;
+
+        const nameStr = String(name).trim();
+        if (!nameStr || nameStr === '0') continue;
+
+        ingredients.push({
+          name: nameStr,
+          g: Math.round(gVal * 10000) / 10000
+        });
+      }
+
+      if (ingredients.length > 0) {
+        found[colorId] = {
+          ingredients: sortI(ingredients),
+          total_g: total ? Math.round(total * 10000) / 10000
+                        : Math.round(ingredients.reduce((s,i) => s + i.g, 0) * 10000) / 10000
+        };
+      }
+    }
+  }
+
+  if (Object.keys(found).length === 0) {
+    alert('找不到有效配方，請確認 Excel 格式（每個色號下方需有「色料」標題列）');
+    return;
+  }
+
+  // Classify: new vs update vs same
+  pendingImport = [];
+  for (const [id, recipe] of Object.entries(found)) {
+    pendingImport.push({
+      id, recipe,
+      isNew: !recipes[id],
+      isDiff: recipes[id] && JSON.stringify(sortI(recipes[id].ingredients)) !== JSON.stringify(recipe.ingredients)
+    });
+  }
+
+  const newCount    = pendingImport.filter(p => p.isNew).length;
+  const updateCount = pendingImport.filter(p => !p.isNew && p.isDiff).length;
+  const sameCount   = pendingImport.filter(p => !p.isNew && !p.isDiff).length;
+
+    document.getElementById('import-summary').innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px">
+      <span style="background:rgba(110,196,138,.15);color:#6ec48a;padding:4px 10px;border-radius:6px;font-size:13px">🆕 新增 ${newCount} 筆</span>
+      <span style="background:rgba(126,184,201,.15);color:#7eb8c9;padding:4px 10px;border-radius:6px;font-size:13px">🔄 更新 ${updateCount} 筆</span>
+      <span style="background:rgba(122,127,150,.15);color:#7a7f96;padding:4px 10px;border-radius:6px;font-size:13px">✓ 無變動 ${sameCount} 筆</span>
+    </div>
+    <div style="font-size:12px;color:#7a7f96;margin-top:6px">請確認後點「確認匯入」</div>`;
+
+  const listHtml = pendingImport.map(p => {
+    if (!p.isNew && !p.isDiff) return '';
+    const tag = p.isNew
+      ? '<span style="background:rgba(110,196,138,.15);color:#6ec48a;font-size:10px;padding:1px 6px;border-radius:3px;font-family:monospace">NEW</span>'
+      : '<span style="background:rgba(126,184,201,.15);color:#7eb8c9;font-size:10px;padding:1px 6px;border-radius:3px;font-family:monospace">UPDATE</span>';
+    const sr = series(p.id); const sc = SC[sr]||'s-sp';
+    const ings = p.recipe.ingredients.map(i => {
+      const cat = getIC(i.name).cat||'未分類';
+      return `<span style="font-size:11px;color:#7a7f96">${i.name}<span style="color:#7eb8c9;font-family:monospace"> ${i.g}g</span></span>`;
+    }).join(' · ');
+    return `<div style="padding:9px 0;border-bottom:1px solid #2a2d3a">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+        ${tag}
+        <span class="sbadge ${sc}">${sr}</span>
+        <span style="font-family:monospace;color:#c8a96e;font-weight:500">${p.id}</span>
+        <span style="font-size:11px;color:#7a7f96">${p.recipe.total_g.toFixed(2)}g</span>
+      </div>
+      <div style="line-height:1.8">${ings}</div>
+    </div>`;
+  }).filter(Boolean).join('');
+
+  document.getElementById('import-list').innerHTML = listHtml || '<div style="color:#7a7f96;font-size:13px;padding:12px 0">所有配方皆無變動</div>';
+  document.getElementById('import-confirm-btn').style.display = (newCount + updateCount > 0) ? 'inline-flex' : 'none';
+  document.getElementById('import-modal').classList.add('open');
+}
+
+function confirmImport() {
+  let added = 0, updated = 0;
+  for (const p of pendingImport) {
+    if (p.isNew || p.isDiff) {
+      recipes[p.id] = p.recipe;
+      if (p.isNew) added++; else updated++;
+    }
+  }
+  saveToLS();cloudSync();
+  closeM('import-modal');
+  refreshAll();
+  toast(`匯入完成：新增 ${added} 筆，更新 ${updated} 筆 ✓`);
+  pendingImport = [];
+}
+
+
+function forceUploadToCloud() {
+  const btn = document.getElementById('cloud-upload-btn');
+  const count = Object.keys(recipes).length;
+  if (!confirm(`確定要將本機的 ${count} 筆配方上傳到雲端嗎？\n這會覆蓋雲端現有的資料。`)) return;
+  btn.textContent = '上傳中…';
+  btn.disabled = true;
+
+  if (!window.saveToCloud) {
+    alert('Firebase 尚未連線，請稍後再試');
+    btn.textContent = '☁️ 上傳本機資料到雲端';
+    btn.disabled = false;
+    return;
+  }
+
+  if (!window._fsReady) {
+    alert('Firebase 連線尚未就緒，請等右上角顯示連線成功後再試');
+    btn.textContent = '☁️ 上傳本機資料到雲端';
+    btn.disabled = false;
+    return;
+  }
+
+  window.recipes = recipes;
+  window.saveToCloud(recipes).then(ok => {
+    if (ok) {
+      toast('✅ 已成功上傳 ' + count + ' 筆配方到雲端！');
+    } else {
+      toast('❌ 上傳失敗，請查看右上角錯誤訊息');
+    }
+    btn.textContent = '☁️ 上傳本機資料到雲端';
+    btn.disabled = false;
+  }).catch(e => {
+    toast('❌ 上傳錯誤: ' + e.message);
+    btn.textContent = '☁️ 上傳本機資料到雲端';
+    btn.disabled = false;
+  });
+}
+
+
+// ===== COLOR AUTOCOMPLETE =====
+function showColorSuggest(inp) {
+  const q = inp.value.trim().toLowerCase();
+  const suggest = inp.nextElementSibling;
+  if (!q) { suggest.style.display='none'; return; }
+  const matches = sortedKeys(Object.keys(recipes).filter(k => k.toLowerCase().includes(q))).slice(0, 20);
+  if (!matches.length) { suggest.style.display='none'; return; }
+  suggest.innerHTML = matches.map(k => {
+    const sr=series(k); const sc=SC[sr]||'s-sp';
+    return `<div onclick="selectColor(this,'${k}')" style="padding:7px 10px;cursor:pointer;display:flex;align-items:center;gap:7px;font-size:13px" onmouseenter="this.style.background='var(--surface2)'" onmouseleave="this.style.background=''">
+      <span class="sbadge ${sc}">${sr}</span>${k}
+    </div>`;
+  }).join('');
+  suggest.style.display = 'block';
+}
+
+function hideColorSuggest(inp) {
+  const suggest = inp.nextElementSibling;
+  if (suggest) suggest.style.display = 'none';
+}
+
+function selectColor(el, colorId) {
+  const suggest = el.parentElement;
+  const inp = suggest.previousElementSibling;
+  inp.value = colorId;
+  suggest.style.display = 'none';
+}
+
+// ===== EXPORT PRODUCTION TABLE TO EXCEL =====
+function exportProductionExcel() {
+  if (!window._prodData || !window._prodData.orderDetails) {
+    alert('請先生成生產配方表'); return;
+  }
+  doExportProductionExcel();
+}
+
+function doExportProductionExcel() {
+  const { orderDetails, ingMap } = window._prodData;
+  const catOrd = {'基料':1,'色漿':2,'螢光粉':3,'染料':4,'亮粉':5,'未分類':9};
+
+  // ── XML Excel (SpreadsheetML) with full style support ──
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Style indices
+  // 0=normal, 1=header(grey+bold+center+border), 2=sum(blue+bold+center+border), 3=data(center+border), 4=data-left+border, 5=num(center+border+2dp)
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts>
+    <font><sz val="11"/><name val="Calibri"/></font>
+    <font><sz val="11"/><b/><name val="Calibri"/></font>
+  </fonts>
+  <fills>
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFD9D9D9"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFBDD7EE"/></patternFill></fill>
+  </fills>
+  <borders>
+    <border><left/><right/><top/><bottom/></border>
+    <border>
+      <left style="thin"><color rgb="FF000000"/></left>
+      <right style="thin"><color rgb="FF000000"/></right>
+      <top style="thin"><color rgb="FF000000"/></top>
+      <bottom style="thin"><color rgb="FF000000"/></bottom>
+    </border>
+  </borders>
+  <cellStyleXfs><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs>
+    <xf numFmtId="0"  fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0"  fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0"  fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0"  fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="0"  fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left"   vertical="center"/></xf>
+    <xf numFmtId="2"  fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1" applyNumberFormat="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="2"  fontId="1" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1" applyNumberFormat="1"><alignment horizontal="center" vertical="center"/></xf>
+    <xf numFmtId="2"  fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1" applyNumberFormat="1"><alignment horizontal="center" vertical="center"/></xf>
+  </cellXfs>
+</styleSheet>`;
+  // Style index reference:
+  // 1=header(grey bold center), 2=sum(blue bold center), 3=center border
+  // 4=left border, 5=num center border, 6=num sum blue, 7=num header grey
+
+  function nCell(v, s) { // number cell
+    return `<c t="n" s="${s}"><v>${v}</v></c>`;
+  }
+  function sCell(v, s) { // string cell
+    return `<c t="inlineStr" s="${s}"><is><t>${esc(v)}</t></is></c>`;
+  }
+  function eCell(s) { // empty cell with style
+    return `<c t="inlineStr" s="${s}"><is><t></t></is></c>`;
+  }
+
+  // Build Sheet 1
+  let s1rows = '';
+  let merges1 = [];
+  let rowIdx = 2; // 1-based, row 1 = header
+
+  // Header row
+  s1rows += `<row r="1" ht="20" customHeight="1">
+    ${sCell('色號',1)}${sCell('訂單量(kg)',1)}${sCell('分類',1)}${sCell('原料',1)}${sCell('用量(g)',1)}
+  </row>\n`;
+
+  orderDetails.forEach(o => {
+    const startR = rowIdx;
+    o.ings.forEach((ing, idx) => {
+      const c1 = idx===0 ? sCell(String(o.cn), 3) : eCell(3);
+      const c2 = idx===0 ? nCell(parseFloat(o.qty.toFixed(2)), 5) : eCell(5);
+      s1rows += `<row r="${rowIdx}" ht="18" customHeight="1">
+        ${c1}${c2}${sCell(ing.cat,3)}${sCell(ing.name,4)}${nCell(parseFloat(ing.g.toFixed(2)),5)}
+      </row>\n`;
+      rowIdx++;
+    });
+    if (o.ings.length > 1) {
+      merges1.push(`<mergeCell ref="A${startR}:A${rowIdx-1}"/>`);
+      merges1.push(`<mergeCell ref="B${startR}:B${rowIdx-1}"/>`);
+    }
+    // 小計
+    s1rows += `<row r="${rowIdx}" ht="18" customHeight="1">
+      ${sCell('小計',2)}${eCell(2)}${eCell(2)}${eCell(2)}${nCell(parseFloat((o.qty*1000).toFixed(2)),6)}
+    </row>\n`;
+    merges1.push(`<mergeCell ref="A${rowIdx}:D${rowIdx}"/>`);
+    rowIdx++;
+  });
+
+  const sheet1 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetFormatPr defaultRowHeight="18"/>
+  <cols>
+    <col min="1" max="1" width="12" customWidth="1"/>
+    <col min="2" max="2" width="12" customWidth="1"/>
+    <col min="3" max="3" width="10" customWidth="1"/>
+    <col min="4" max="4" width="18" customWidth="1"/>
+    <col min="5" max="5" width="14" customWidth="1"/>
+  </cols>
+  <sheetData>${s1rows}</sheetData>
+  <mergeCells count="${merges1.length}">${merges1.join('')}</mergeCells>
+</worksheet>`;
+
+  // Build Sheet 2
+  let s2rows = '';
+  let r2 = 2;
+  s2rows += `<row r="1" ht="20" customHeight="1">
+    ${sCell('分類',1)}${sCell('原料',1)}${sCell('總需求(g)',1)}
+  </row>\n`;
+
+  const sortedI = Object.entries(ingMap).sort((a,b)=>
+    (catOrd[getIC(a[0]).cat||'未分類']||9)-(catOrd[getIC(b[0]).cat||'未分類']||9)||(b[1]-a[1])
+  );
+  sortedI.forEach(([name,kg]) => {
+    s2rows += `<row r="${r2}" ht="18" customHeight="1">
+      ${sCell(getIC(name).cat||'未分類',3)}${sCell(name,4)}${nCell(parseFloat((kg*1000).toFixed(2)),5)}
+    </row>\n`;
+    r2++;
+  });
+  const totI = sortedI.reduce((s,[,v])=>s+v,0);
+  s2rows += `<row r="${r2}" ht="18" customHeight="1">
+    ${sCell('總計',2)}${eCell(2)}${nCell(parseFloat((totI*1000).toFixed(2)),6)}
+  </row>\n`;
+
+  const sheet2 = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetFormatPr defaultRowHeight="18"/>
+  <cols>
+    <col min="1" max="1" width="10" customWidth="1"/>
+    <col min="2" max="2" width="20" customWidth="1"/>
+    <col min="3" max="3" width="14" customWidth="1"/>
+  </cols>
+  <sheetData>${s2rows}</sheetData>
+</worksheet>`;
+
+  // ── Assemble ZIP (xlsx) manually ──
+  const now = new Date();
+  const fname = `AP生產配方表_${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}.xlsx`;
+
+  const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const wbXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="各色號詳細用料" sheetId="1" r:id="rId1"/>
+    <sheet name="原料匯總需求"   sheetId="2" r:id="rId2"/>
+  </sheets>
+</workbook>`;
+
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"    Target="styles.xml"/>
+</Relationships>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml"  ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml"            ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml"   ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/worksheets/sheet2.xml"   ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/styles.xml"              ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+  // Use JSZip (bundled with SheetJS CDN) or load separately
+  function buildZip() {
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', contentTypes);
+    zip.file('_rels/.rels', rels);
+    zip.file('xl/workbook.xml', wbXml);
+    zip.file('xl/_rels/workbook.xml.rels', wbRels);
+    zip.file('xl/styles.xml', styles);
+    zip.file('xl/worksheets/sheet1.xml', sheet1);
+    zip.file('xl/worksheets/sheet2.xml', sheet2);
+    zip.generateAsync({type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fname; a.click();
+        URL.revokeObjectURL(url);
+      });
+  }
+
+  if (typeof JSZip === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload = buildZip;
+    s.onerror = () => alert('無法載入 JSZip，請確認網路連線');
+    document.head.appendChild(s);
+  } else {
+    buildZip();
+  }
+}
+
+
+// 直接測試 Firebase 寫入
+window.testFirebase = async function() {
+  const el = document.getElementById('sync-status');
+  el.style.opacity = '1';
+
+  // Step 1: 確認橋接函數
+  el.textContent = '步驟1: 檢查橋接函數...';
+  el.style.color = 'var(--accent2)';
+  if (typeof window._getRecipes !== 'function') {
+    el.textContent = '❌ _getRecipes 未定義'; el.style.color='var(--danger)'; return;
+  }
+  const data = window._getRecipes();
+  const count = Object.keys(data).length;
+  el.textContent = '步驟1 ✓ 本機共 ' + count + ' 筆';
+  await new Promise(r => setTimeout(r, 800));
+
+  // Step 2: 確認 Firebase 就緒
+  el.textContent = '步驟2: 確認 Firebase...';
+  if (typeof window.saveToCloud !== 'function') {
+    el.textContent = '❌ saveToCloud 未定義'; el.style.color='var(--danger)'; return;
+  }
+  el.textContent = '步驟2 ✓ Firebase 函數存在';
+  await new Promise(r => setTimeout(r, 800));
+
+  // Step 3: 寫入測試
+  el.textContent = '步驟3: 寫入 ' + count + ' 筆到雲端...';
+  try {
+    const ok = await window.saveToCloud(data);
+    if (ok) {
+      el.textContent = '✅ 成功！已上傳 ' + count + ' 筆';
+      el.style.color = 'var(--success)';
+    } else {
+      el.textContent = '❌ 寫入回傳失敗';
+      el.style.color = 'var(--danger)';
+    }
+  } catch(e) {
+    el.textContent = '❌ 錯誤: ' + e.message;
+    el.style.color = 'var(--danger)';
+  }
+};
+function testFirebase() { window.testFirebase(); }
+
+
+window.downloadCloudData = async function() {
+  const el = document.getElementById('sync-status');
+  el.style.opacity = '1';
+  el.style.color = 'var(--accent2)';
+  el.textContent = '讀取雲端資料中...';
+
+  if (typeof window.saveToCloud !== 'function') {
+    el.textContent = '❌ Firebase 未連線'; el.style.color='var(--danger)'; return;
+  }
+
+  try {
+    // Use getDoc via a workaround - call reloadFromCloud but intercept
+    // Actually just download current local recipes AND trigger a fresh getDoc
+    // We need to expose getDoc - let's add it to window in the module
+
+    if (typeof window._getCloudRaw !== 'function') {
+      el.textContent = '❌ 需要更新版本才能下載雲端資料';
+      el.style.color = 'var(--danger)';
+      return;
+    }
+
+    const raw = await window._getCloudRaw();
+    if (!raw) {
+      el.textContent = '❌ 雲端無資料'; el.style.color='var(--danger)'; return;
+    }
+
+    const cloudCount = Object.keys(raw).length;
+    const localCount = Object.keys(window._getRecipes()).length;
+
+    // Download as JSON
+    const blob = new Blob([JSON.stringify({
+      cloud_count: cloudCount,
+      local_count: localCount,
+      cloud_data: raw
+    }, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'firebase_cloud_data.json';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    el.textContent = '✅ 雲端:' + cloudCount + '筆 / 本機:' + localCount + '筆';
+    el.style.color = cloudCount === localCount ? 'var(--success)' : 'var(--danger)';
+  } catch(e) {
+    el.textContent = '❌ ' + e.message; el.style.color='var(--danger)';
+  }
+};
+function downloadCloudData() { window.downloadCloudData(); }
+
+
+function renderCustomerList() {
+  const c = document.getElementById('customer-list');
+  if (!c) return;
+  c.innerHTML = customers.filter(x=>x.id!=='all').map(cu => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px">
+      <span style="font-weight:500;color:var(--accent)">${cu.name}</span>
+      <span style="font-size:11px;color:var(--text-muted)">${cu.patterns.map(p=>p.replace('num:','').replace('prefix:','')).join(', ')}</span>
+      <button onclick="deleteCustomer('${cu.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;margin-left:auto">✕</button>
+    </div>`).join('');
+}
+
+function addCustomer() {
+  const name = document.getElementById('new-customer-name').value.trim();
+  const pat  = document.getElementById('new-customer-pattern').value.trim();
+  if (!name || !pat) { alert('請輸入客戶名稱和色號範圍'); return; }
+
+  // Parse pattern: "201-364" -> num:201-364, "S" or "CE" -> prefix:S
+  let pattern;
+  if (/^\d+-\d+$/.test(pat)) {
+    pattern = 'num:' + pat;
+  } else {
+    pattern = 'prefix:' + pat.replace(/[^A-Za-z]/g,'');
+  }
+
+  const id = name.toLowerCase().replace(/\s+/g,'_') + '_' + Date.now();
+  customers.push({ id, name, patterns:[pattern] });
+  saveCustomers();
+  buildCustomerSelect();
+  renderCustomerList();
+  document.getElementById('new-customer-name').value = '';
+  document.getElementById('new-customer-pattern').value = '';
+  toast('客戶「' + name + '」已新增 ✓');
+  cloudSync();
+}
+
+function deleteCustomer(id) {
+  const c = customers.find(x=>x.id===id);
+  if (!c) return;
+  if (!confirm('確定刪除客戶「' + c.name + '」？')) return;
+  customers = customers.filter(x=>x.id!==id);
+  if (currentCustomer === id) { currentCustomer='all'; localStorage.setItem('ap_current_customer','all'); }
+  saveCustomers();
+  buildCustomerSelect();
+  renderCustomerList();
+  filterSearch(); filterManage();
+  toast('客戶已刪除');
+  cloudSync();
+}
+
+
+// ===== 材料表 =====
+// MAT_CAT_COLORS moved above
+
+// Pre-populate from existing CATS definition
+// getDefaultMaterials moved above
+
+// materials initialized below
+
+function saveMaterials() {
+  localStorage.setItem('ap_materials', JSON.stringify(materials));
+}
+
+function addMaterial() {
+  const name = document.getElementById('mat-name').value.trim();
+  const cat  = document.getElementById('mat-cat').value;
+  const note = document.getElementById('mat-note').value.trim();
+  if (!name) { alert('請輸入材料名稱'); return; }
+  if (materials.find(m => m.name === name)) { alert('材料「' + name + '」已存在'); return; }
+  materials.push({ name, cat, note });
+  saveMaterials();
+  cloudSyncMaterials();
+  renderMaterials();
+  updateMatStats();
+  document.getElementById('mat-name').value = '';
+  document.getElementById('mat-note').value = '';
+  toast('材料「' + name + '」已新增 ✓');
+}
+
+function deleteMaterial(name) {
+  if (!confirm('確定刪除材料「' + name + '」？')) return;
+  materials = materials.filter(m => m.name !== name);
+  saveMaterials();
+  cloudSyncMaterials();
+  renderMaterials();
+  updateMatStats();
+  toast('材料「' + name + '」已刪除');
+}
+
+function editMaterialNote(name, note) {
+  const m = materials.find(x => x.name === name);
+  if (m) { m.note = note; saveMaterials(); cloudSyncMaterials(); }
+}
+
+function editMaterialCat(name, cat) {
+  const m = materials.find(x => x.name === name);
+  if (m) { m.cat = cat; saveMaterials(); cloudSyncMaterials(); renderMaterials(); }
+}
+
+function renderMaterials() {
+  const q   = (document.getElementById('mat-search')?.value || '').trim().toLowerCase();
+  const cat = document.getElementById('mat-filter-cat')?.value || '';
+  const filtered = materials.filter(m => {
+    if (cat && m.cat !== cat) return false;
+    if (q && !m.name.toLowerCase().includes(q) && !m.note.toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  // Group by category
+  const groups = {};
+  for (const m of filtered) {
+    if (!groups[m.cat]) groups[m.cat] = [];
+    groups[m.cat].push(m);
+  }
+
+  const catOrder = ['基料','色漿','螢光粉','染料','亮粉','其他'];
+  let html = '';
+
+  for (const cat of catOrder) {
+    if (!groups[cat]) continue;
+    const style = MAT_CAT_COLORS[cat] || MAT_CAT_COLORS['其他'];
+    html += `<div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+        color:${style.color};background:${style.bg};padding:5px 12px;border-radius:6px;
+        display:inline-block;margin-bottom:8px">${cat}（${groups[cat].length}）</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px">`;
+
+    for (const m of groups[cat].sort((a,b)=>a.name.localeCompare(b.name,'zh-TW'))) {
+      html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px">
+        <span style="font-weight:500;font-family:'DM Mono',monospace;flex:1;font-size:13px">${m.name}</span>
+        <select onchange="editMaterialCat('${m.name}',this.value)"
+          style="background:${style.bg};color:${style.color};border:none;font-size:11px;padding:2px 4px;border-radius:4px;cursor:pointer;font-family:'Noto Sans TC',sans-serif">
+          ${catOrder.map(c=>`<option value="${c}" ${c===m.cat?'selected':''}>${c}</option>`).join('')}
+        </select>
+        <input type="text" value="${m.note}" placeholder="備註"
+          onblur="editMaterialNote('${m.name}',this.value)"
+          style="background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);
+            padding:3px 7px;border-radius:4px;font-size:11px;width:90px;font-family:'Noto Sans TC',sans-serif">
+        <button onclick="deleteMaterial('${m.name}')"
+          style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:2px">✕</button>
+      </div>`;
+    }
+    html += '</div></div>';
+  }
+
+  if (!html) html = '<div class="empty"><div style="font-size:40px">🧪</div>找不到符合的材料</div>';
+  document.getElementById('mat-list').innerHTML = html;
+  updateMatStats();
+}
+
+function updateMatStats() {
+  const t = document.getElementById('mat-total');
+  const c = document.getElementById('mat-cats');
+  if (t) t.textContent = materials.length;
+  if (c) c.textContent = [...new Set(materials.map(m=>m.cat))].length;
+}
+
+function cloudSyncMaterials() {
+  if (window.saveToCloud && window._fsReady) {
+    window.saveToCloud(recipes, customers, materials);
+  }
+}
+
+function initMaterials() {
+  renderMaterials();
+}
+
+</script>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="import-modal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title"><span>📥 Excel 匯入結果</span><button class="modal-close" onclick="closeM('import-modal')">✕</button></div>
+    <div id="import-summary" style="margin-bottom:14px"></div>
+    <div id="import-list" style="max-height:340px;overflow-y:auto"></div>
+    <div style="display:flex;gap:7px;margin-top:14px">
+      <button class="btn" id="import-confirm-btn" onclick="confirmImport()">✅ 確認匯入</button>
+      <button class="btn sec" onclick="closeM('import-modal')">取消</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MATERIALS PAGE -->
+<div class="page" id="page-materials">
+  <div class="page-title">材料表</div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">材料總數</div><div class="stat-value" id="mat-total">0</div></div>
+    <div class="stat-card"><div class="stat-label">類別數</div><div class="stat-value" id="mat-cats">0</div></div>
+  </div>
+
+  <!-- 新增材料 -->
+  <div class="sbox">
+    <div class="stitle">新增材料</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+      <div>
+        <div class="flabel" style="margin-bottom:5px">材料名稱</div>
+        <input id="mat-name" class="finp" type="text" placeholder="例如：L稀、8928紫" style="width:160px">
+      </div>
+      <div>
+        <div class="flabel" style="margin-bottom:5px">類別</div>
+        <select id="mat-cat" class="finp" style="width:120px">
+          <option value="基料">基料</option>
+          <option value="色漿">色漿</option>
+          <option value="螢光粉">螢光粉</option>
+          <option value="染料">染料</option>
+          <option value="亮粉">亮粉</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div>
+        <div class="flabel" style="margin-bottom:5px">備註（選填）</div>
+        <input id="mat-note" class="finp" type="text" placeholder="備註" style="width:180px">
+      </div>
+      <button class="btn" onclick="addMaterial()" style="margin-bottom:1px">＋ 新增</button>
+    </div>
+  </div>
+
+  <!-- 搜尋 + 篩選類別 -->
+  <div class="search-bar">
+    <input class="search-input" id="mat-search" placeholder="搜尋材料名稱…" oninput="renderMaterials()">
+    <select id="mat-filter-cat" class="finp" style="width:120px;flex:none" onchange="renderMaterials()">
+      <option value="">全部類別</option>
+      <option value="基料">基料</option>
+      <option value="色漿">色漿</option>
+      <option value="螢光粉">螢光粉</option>
+      <option value="染料">染料</option>
+      <option value="亮粉">亮粉</option>
+      <option value="其他">其他</option>
+    </select>
+  </div>
+
+  <!-- 材料列表 -->
+  <div id="mat-list"></div>
+</div>
+
+</body>
+</html>
