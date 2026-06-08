@@ -304,7 +304,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-9</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-10</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -885,6 +885,13 @@ function genProd(){
   const orders=[];
   for(const row of rows){const cn=row.querySelector('input[type=text]').value.trim(),qty=parseFloat(row.querySelector('input[type=number]').value);if(cn&&recipes[cn]&&qty>0)orders.push({cn,qty});else if(cn&&!recipes[cn]&&qty>0){alert('找不到色號：'+cn+'\n請確認色號是否正確');return;}}
   if(!orders.length){alert('請輸入有效訂單');return;}
+  // 依色號順序排列（同 sortedKeys 邏輯）
+  orders.sort((a,b)=>{
+    const so={'200色':1,'G系列':2,'J系列':3,'Nude':4,'特殊':5};
+    const sa=series(a.cn),sb=series(b.cn);
+    if(so[sa]!==so[sb]) return (so[sa]||9)-(so[sb]||9);
+    return a.cn.localeCompare(b.cn,'zh-TW',{numeric:true});
+  });
   const imap={};
   const details=orders.map(o=>{
     const r=recipes[o.cn];if(!r)return null;
