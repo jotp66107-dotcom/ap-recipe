@@ -304,7 +304,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-10</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.05.22-11</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -433,7 +433,14 @@ function doLogin(){
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
     <div class="modal-title"><span id="em-title">新增配方</span><button class="modal-close" onclick="closeM('edit-modal')">✕</button></div>
-    <div style="margin-bottom:11px"><div class="flabel">色號</div><input class="finp" id="em-num" type="text" placeholder="201 / G13 / J19 / Nude7" style="width:200px"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:11px">
+      <div><div class="flabel">色號</div><input class="finp" id="em-num" type="text" placeholder="201 / G13 / J19 / Nude7" style="width:200px"></div>
+      <div><div class="flabel">所屬客戶</div>
+        <select id="em-customer" class="finp" style="width:160px">
+          <option value="">-- 未指定 --</option>
+        </select>
+      </div>
+    </div>
     <div class="flabel" style="margin-bottom:7px">原料成分（順序：基料 → 色漿 → 螢光粉 → 染料 → 亮粉）</div>
     <div id="em-ings"></div>
     <button class="addbtn" onclick="addIngRow()">＋ 新增原料</button>
@@ -747,7 +754,9 @@ function renderGrid(cid,keys,isM){
     const prev=si.slice(0,4).map(i=>i.name).join('、')+(si.length>4?`…+${si.length-4}`:'');
     const sr=series(n);const sc=SC[sr]||'s-sp';
     const fn=isM?`openEdit('${n}')`:`openDetail('${n}')`;
-    return`<div class="recipe-card" onclick="${fn}"><div class="recipe-card-num">${n}</div><div class="recipe-card-ingredients">${prev}</div><div class="recipe-card-footer"><span class="sbadge ${sc}">${sr}</span><span style="font-size:10px">${r.ingredients.length}種 / ${r.total_g.toFixed(2)}g</span></div></div>`;
+    const recCust = r.customer ? customers.find(c=>c.id===r.customer) : null;
+    const custBadge = recCust ? `<span style="font-size:10px;background:rgba(200,169,110,.1);color:var(--accent);padding:1px 6px;border-radius:4px;margin-left:4px">${recCust.name}</span>` : '';
+    return`<div class="recipe-card" onclick="${fn}"><div class="recipe-card-num">${n}${custBadge}</div><div class="recipe-card-ingredients">${prev}</div><div class="recipe-card-footer"><span class="sbadge ${sc}">${sr}</span><span style="font-size:10px">${r.ingredients.length}種 / ${r.total_g.toFixed(2)}g</span></div></div>`;
   }).join('');
 }
 
@@ -788,6 +797,7 @@ function openAddModal(){
   document.getElementById('em-num').value='';document.getElementById('em-num').removeAttribute('readonly');
   document.getElementById('del-btn').style.display='none';
   document.getElementById('em-ings').innerHTML='';addIngRow();
+  buildEmCustomerSelect('');
   document.getElementById('edit-modal').classList.add('open');
 }
 function openEdit(n){
@@ -797,6 +807,8 @@ function openEdit(n){
   document.getElementById('del-btn').style.display='inline-flex';
   document.getElementById('em-ings').innerHTML='';
   sortI(r.ingredients).forEach(ing=>addIngRow(ing.name,ing.g));
+  // 填入客戶選單
+  buildEmCustomerSelect(r.customer || '');
   document.getElementById('edit-modal').classList.add('open');
 }
 function addIngRow(name='',g=''){
@@ -835,7 +847,9 @@ function saveR(){
   const ings=[];let tot=0;
   for(const row of rows){const nm=row.querySelectorAll('input')[0].value.trim(),g=parseFloat(row.querySelectorAll('input')[1].value);if(nm&&g>0){ings.push({name:nm,g});tot+=g;}}
   if(!ings.length){alert('請至少新增一種原料');return;}
-  recipes[nv]={ingredients:sortI(ings),total_g:tot};
+  const custSel = document.getElementById('em-customer');
+  const recipeCustomer = custSel ? custSel.value : '';
+  recipes[nv]={ingredients:sortI(ings),total_g:tot,customer:recipeCustomer};
   saveToLS();cloudSync();
   closeM('edit-modal');refreshAll();toast(`配方 ${nv} 已儲存 ✓`);
 }
@@ -1670,6 +1684,16 @@ function cloudSyncMaterials() {
 
 function initMaterials() {
   renderMaterials();
+}
+
+
+function buildEmCustomerSelect(selectedId) {
+  const sel = document.getElementById('em-customer');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- 未指定 --</option>' +
+    customers.filter(c => c.id !== 'all').map(c =>
+      `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.name}</option>`
+    ).join('');
 }
 
 </script>
