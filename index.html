@@ -328,7 +328,7 @@ function doLogin(){
 
 <div class="header">
   <div class="logo">▲ AP</div>
-  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.06.29-2</div>
+  <div style="font-size:10px;color:var(--text-muted);font-family:'DM Mono',monospace;letter-spacing:1px">v2026.06.29-3</div>
   <div style="display:flex;align-items:center;gap:6px;margin-left:8px">
     <span style="font-size:11px;color:var(--text-muted)">客戶</span>
     <select id="customer-select" onchange="switchCustomer(this.value)"
@@ -985,7 +985,7 @@ function genProd(){
   html+=`</tbody><tfoot><tr class="ssum"><td colspan="2">總計</td><td>${(totI*1000).toFixed(4)} g</td><td>${totI.toFixed(6)} kg</td></tr></tfoot></table></div></div>`;
 
   // Store for Excel export
-  window._prodData = {orderDetails:details, ingMap:imap, dateStr:ds, totalKg:totKg};
+  window._prodData = {orderDetails:details, ingMap:imap, dateStr:ds, totalKg:totKg, po:po};
   // Store for "前往補登批號" — list of color+qty pairs under this PO
   window._pendingLotEntries = orders.map(o => ({ po, cn:o.cn, qty:o.qty }));
 
@@ -1346,10 +1346,16 @@ function doExportProductionExcel() {
   let s1rows = '';
   let merges1 = [];
   let rowIdx = 2; // 1-based, row 1 = header
+  const poNum = (window._prodData && window._prodData.po) ? window._prodData.po : '';
 
-  // Header row
+  // PO 資訊列
   s1rows += `<row r="1" ht="20" customHeight="1">
-    ${sCell('色號',1)}${sCell('訂單量(kg)',1)}${sCell('分類',1)}${sCell('原料',1)}${sCell('用量(g)',1)}
+    ${sCell('PO 號碼：' + poNum, 0)}${eCell(0)}${eCell(0)}${eCell(0)}${eCell(0)}${eCell(0)}
+  </row>\n`;
+  rowIdx = 3;
+  // Header row（多一欄：原料進料批號）
+  s1rows += `<row r="2" ht="20" customHeight="1">
+    ${sCell('色號',1)}${sCell('訂單量(kg)',1)}${sCell('分類',1)}${sCell('原料',1)}${sCell('用量(g)',1)}${sCell('原料進料批號',1)}
   </row>\n`;
 
   orderDetails.forEach(o => {
@@ -1357,8 +1363,8 @@ function doExportProductionExcel() {
     o.ings.forEach((ing, idx) => {
       const c1 = idx===0 ? sCell(String(o.cn), 3) : eCell(3);
       const c2 = idx===0 ? nCell(parseFloat(o.qty.toFixed(2)), 5) : eCell(5);
-      s1rows += `<row r="${rowIdx}" ht="18" customHeight="1">
-        ${c1}${c2}${sCell(ing.cat,3)}${sCell(ing.name,4)}${nCell(parseFloat(ing.g.toFixed(2)),5)}
+      s1rows += `<row r="${rowIdx}" ht="20" customHeight="1">
+        ${c1}${c2}${sCell(ing.cat,3)}${sCell(ing.name,4)}${nCell(parseFloat(ing.g.toFixed(2)),5)}${sCell('',3)}
       </row>\n`;
       rowIdx++;
     });
@@ -1368,7 +1374,7 @@ function doExportProductionExcel() {
     }
     // 小計
     s1rows += `<row r="${rowIdx}" ht="18" customHeight="1">
-      ${sCell('小計',2)}${eCell(2)}${eCell(2)}${eCell(2)}${nCell(parseFloat((o.qty*1000).toFixed(2)),6)}
+      ${sCell('小計',2)}${eCell(2)}${eCell(2)}${eCell(2)}${nCell(parseFloat((o.qty*1000).toFixed(2)),6)}${eCell(2)}
     </row>\n`;
     merges1.push(`<mergeCell ref="A${rowIdx}:D${rowIdx}"/>`);
     rowIdx++;
@@ -1383,6 +1389,7 @@ function doExportProductionExcel() {
     <col min="3" max="3" width="10" customWidth="1"/>
     <col min="4" max="4" width="18" customWidth="1"/>
     <col min="5" max="5" width="14" customWidth="1"/>
+    <col min="6" max="6" width="20" customWidth="1"/>
   </cols>
   <sheetData>${s1rows}</sheetData>
   <mergeCells count="${merges1.length}">${merges1.join('')}</mergeCells>
